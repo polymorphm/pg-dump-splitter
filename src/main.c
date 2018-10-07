@@ -15,8 +15,9 @@ static void
 argp_print_version (FILE *stream,
         struct argp_state *state __attribute__ ((unused)))
 {
-    fprintf (stream, "%s (%s)\n",
-            PG_DUMP_SPLITTER_VERSION, PG_DUMP_SPLITTER_GIT_REV);
+    fprintf (stream, "%s %s (%s)\n",
+            PG_DUMP_SPLITTER_NAME, PG_DUMP_SPLITTER_VERSION,
+            PG_DUMP_SPLITTER_GIT_REV);
 }
 
 void (*argp_program_version_hook) (FILE *, struct argp_state *) = argp_print_version;

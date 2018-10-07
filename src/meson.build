@@ -1,6 +1,7 @@
 # vim: set et ts=2 sw=2:
 
 conf_data = configuration_data()
+conf_data.set_quoted('PG_DUMP_SPLITTER_NAME', meson.project_name())
 conf_data.set_quoted('PG_DUMP_SPLITTER_VERSION', meson.project_version())
 configure_file(output : 'pg-dump-splitter-config.h',
                configuration : conf_data)
