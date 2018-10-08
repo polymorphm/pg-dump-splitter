@@ -11,13 +11,12 @@
 
 #include <argp.h>
 #include "pg-dump-splitter-config.h"
+#include "git-rev.h"
 
 static const char *const argp_doc = "Splits Postgresql's dump file "
         "for easily using source code comparing tools "
         "to its data. You are able to use this utility "
         "as a part of big automate script.";
-
-extern const char *PG_DUMP_SPLITTER_GIT_REV;
 
 static void
 argp_print_version (FILE *stream,
@@ -25,7 +24,7 @@ argp_print_version (FILE *stream,
 {
     fprintf (stream, "%s %s (%s)\n",
             PG_DUMP_SPLITTER_NAME, PG_DUMP_SPLITTER_VERSION,
-            PG_DUMP_SPLITTER_GIT_REV);
+            pg_dump_splitter_git_rev);
 }
 
 void (*argp_program_version_hook) (FILE *, struct argp_state *) =
