@@ -3,4 +3,5 @@
 project('pg-dump-splitter', 'c',
         version : 'PRE-1.0')
 
+subdir('embedder')
 subdir('src')
