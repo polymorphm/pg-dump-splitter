@@ -49,7 +49,7 @@ def main():
                 i = int(b)
 
                 if i >= 128:
-                    i -= -256
+                    i -= 256
 
                 out_c_fd.write('{},'.format(i))
 
