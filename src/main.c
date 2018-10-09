@@ -6,12 +6,17 @@
 // strdup
 #include <string.h>
 
-// fprintf
+// fprintf, stderr
 #include <stdio.h>
 
 #include <argp.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
 #include "pg-dump-splitter-config.h"
 #include "git-rev.h"
+#include "pg_dump_splitter.lua.h"
 
 static const char *const argp_doc = "Splits Postgresql's dump file "
         "for easily using source code comparing tools "
@@ -113,18 +118,78 @@ static struct argp argp =
 };
 
 int
+luaopen_pg_dump_splitter (lua_State *L)
+{
+    const char *modname = luaL_checkstring (L, 1);
+
+    int lua_err = luaL_loadbuffer (L,
+            EMBEDDED_PG_DUMP_SPLITTER_LUA_DATA,
+            EMBEDDED_PG_DUMP_SPLITTER_LUA_SIZE,
+            modname);
+
+    if (lua_err) {
+        return lua_error (L);
+    }
+
+    lua_pushvalue (L, 1);
+    lua_call (L, 1, 1);
+
+    return 1;
+}
+
+static int
+bootstrap (lua_State *L)
+{
+    // TODO other calls of luaL_requiref (...) here, then lua_pop (L, 1);
+
+    luaL_requiref (
+            L, "pg_dump_splitter", luaopen_pg_dump_splitter, 0);
+
+    lua_getfield (L, -1, "pg_dump_splitter");
+
+    lua_pushvalue (L, 1);
+    lua_pushvalue (L, 2);
+    lua_pushvalue (L, 3);
+
+    lua_call (L, 3, 0);
+
+    return 0;
+}
+
+int
 main (int argc, char *argv[])
 {
     struct arguments arguments = {};
 
     argp_parse (&argp, argc, argv, 0, 0, &arguments);
 
-    // DEBUG ONLY
-    printf ("d: %s\n", arguments.dump_path);
-    printf ("o: %s\n", arguments.output_dir);
-    printf ("k: %s\n", arguments.hooks_path);
+    int exit_code = 0;
 
+    lua_State *L = luaL_newstate ();
+    luaL_openlibs (L);
+
+    lua_pushcfunction (L, bootstrap);
+
+    lua_pushstring (L, arguments.dump_path);
     free (arguments.dump_path);
+    arguments.dump_path = 0;
+
+    lua_pushstring (L, arguments.output_dir);
     free (arguments.output_dir);
+    arguments.output_dir = 0;
+
+    lua_pushstring (L, arguments.hooks_path);
     free (arguments.hooks_path);
+    arguments.hooks_path = 0;
+
+    int lua_err = lua_pcall (L, 3, 0, 0);
+
+    if (lua_err) {
+        fprintf (stderr, "%s\n", lua_tostring(L, -1));
+        exit_code = 1;
+    }
+
+    lua_close (L);
+
+    return exit_code;
 }

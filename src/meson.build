@@ -21,4 +21,5 @@ sources = [
 ]
 
 executable('pg-dump-splitter', sources,
+           dependencies : lua_dep,
            install : true)

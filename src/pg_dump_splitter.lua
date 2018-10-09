@@ -2,10 +2,9 @@
 
 local e, _ENV = _ENV
 
-local function pg_dump_splitter(pump_path, output_dir, hooks_path)
-    e.print("fignya!", pump_path, output_dir, hooks_path)
+local function pg_dump_splitter(dump_path, output_dir, hooks_path)
+    e.print('fignya!', dump_path, output_dir, hooks_path)
 
-    return 0
 end
 
 return {

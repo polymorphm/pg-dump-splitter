@@ -61,8 +61,8 @@ def main():
         )
 
         out_h_fd.write(
-            'const char EMBEDDED_{}_DATA[];\n'
-            'unsigned long EMBEDDED_{}_SIZE;\n'.format(
+            'extern const char EMBEDDED_{}_DATA[];\n'
+            'extern unsigned long EMBEDDED_{}_SIZE;\n'.format(
                 ident,
                 ident,
             ),
