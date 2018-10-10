@@ -120,12 +120,10 @@ static struct argp argp =
 int
 luaopen_pg_dump_splitter (lua_State *L)
 {
-    const char *modname = luaL_checkstring (L, 1);
-
     int lua_err = luaL_loadbuffer (L,
             EMBEDDED_PG_DUMP_SPLITTER_LUA_DATA,
             EMBEDDED_PG_DUMP_SPLITTER_LUA_SIZE,
-            modname);
+            "=pg_dump_splitter");
 
     if (lua_err) {
         return lua_error (L);
