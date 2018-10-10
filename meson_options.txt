@@ -1,0 +1,4 @@
+# vim: set et ts=2 sw=2:
+
+option('luac', type : 'string',
+	description : 'Path to luac program binary')

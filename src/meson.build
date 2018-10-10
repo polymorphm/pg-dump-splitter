@@ -10,7 +10,7 @@ git_rev_c = vcs_tag(command : ['git', 'describe', '--always', '--long', '--dirty
                   input : 'git-rev.c.in',
                   output : 'git-rev.c')
 
-lua_gen_src = embedder_gen.process(
+lua_gen_src = embedder_lua_gen.process(
   'pg_dump_splitter.lua',
 )
 
