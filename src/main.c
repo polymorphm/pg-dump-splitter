@@ -156,6 +156,16 @@ bootstrap (lua_State *L)
     return 0;
 }
 
+static int
+traceback_msgh (lua_State *L)
+{
+    const char *msg = lua_tostring (L, 1);
+
+    luaL_traceback (L, L, msg, 0);
+
+    return 1;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -168,6 +178,7 @@ main (int argc, char *argv[])
     lua_State *L = luaL_newstate ();
     luaL_openlibs (L);
 
+    lua_pushcfunction (L, traceback_msgh);
     lua_pushcfunction (L, bootstrap);
 
     lua_pushstring (L, arguments.dump_path);
@@ -182,7 +193,7 @@ main (int argc, char *argv[])
     free (arguments.hooks_path);
     arguments.hooks_path = 0;
 
-    int lua_err = lua_pcall (L, 3, 0, 0);
+    int lua_err = lua_pcall (L, 3, 0, -5);
 
     if (lua_err) {
         fprintf (stderr, "%s\n", lua_tostring(L, -1));
