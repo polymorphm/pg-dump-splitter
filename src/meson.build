@@ -16,8 +16,10 @@ lua_gen_src = embedder_lua_gen.process(
 
 sources = [
   'main.c',
-  git_rev_c,
+  'emb-libs.c',
+  'os-ext.c',
   lua_gen_src,
+  git_rev_c,
 ]
 
 executable('pg-dump-splitter', sources,

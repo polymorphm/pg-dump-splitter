@@ -12,11 +12,15 @@
 #include <argp.h>
 #include <lua.h>
 #include <lauxlib.h>
+
+// luaL_openlibs
 #include <lualib.h>
 
 #include "pg-dump-splitter-config.h"
 #include "git-rev.h"
-#include "pg_dump_splitter.lua.h"
+
+#include "os-ext.h"
+#include "emb-libs.h"
 
 static const char *const argp_doc = "Splits Postgresql's dump file "
         "for easily using source code comparing tools "
@@ -120,29 +124,15 @@ static struct argp argp =
     .doc = argp_doc,
 };
 
-int
-luaopen_pg_dump_splitter (lua_State *L)
-{
-    int lua_err = luaL_loadbuffer (L,
-            EMBEDDED_PG_DUMP_SPLITTER_LUA_DATA,
-            EMBEDDED_PG_DUMP_SPLITTER_LUA_SIZE,
-            "=pg_dump_splitter");
-
-    if (lua_err)
-    {
-        return lua_error (L);
-    }
-
-    lua_pushvalue (L, 1);
-    lua_call (L, 1, 1);
-
-    return 1;
-}
-
 static int
 bootstrap (lua_State *L)
 {
-    // TODO other calls of luaL_requiref (...) here, then lua_pop (L, 1);
+    luaL_requiref (
+            L, "os_ext", luaopen_os_ext, 0);
+
+    // TODO         other calls of luaL_requiref (...) here
+
+    lua_pop (L, 1); // TODO     increase pop value for more libs
 
     luaL_requiref (
             L, "pg_dump_splitter", luaopen_pg_dump_splitter, 0);

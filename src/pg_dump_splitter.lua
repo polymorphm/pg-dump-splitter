@@ -3,7 +3,7 @@
 local e, _ENV = _ENV
 
 --local lex = e.require 'lex'
---local os_ext = e.require 'os_ext'
+local os_ext = e.require 'os_ext'
 
 --local function split_to_chunks(
 --        lex_ctx, dump_fd, dump_path, output_dir, options, hooks_ctx, options)
@@ -50,7 +50,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
 
         --lex_ctx = 
         dump_fd = e.assert(e.io.open(dump_path))
-        --os_ext.mkdir(tmp_output_dir)
+        os_ext.mkdir(tmp_output_dir)
 
         if hooks_ctx.made_output_dir_handler then
             hooks_ctx:made_output_dir_handler(tmp_output_dir)
