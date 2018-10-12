@@ -13,6 +13,10 @@ local os_ext = e.require 'os_ext'
 local function make_default_options()
     return {
         lex_max_size = 16 * 1024 * 1024,
+        make_lex = lex.make_ctx,
+        open = e.io.open,
+        mkdir = os_ext.mkdir,
+        rename = e.os.rename,
         --split_to_chunks = split_to_chunks,
     }
 end
@@ -49,9 +53,9 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
             e.assert(tmp_output_dir, 'no tmp_output_dir')
         end
 
-        lex_ctx = lex.make_ctx(options.lex_max_size)
-        dump_fd = e.assert(e.io.open(dump_path))
-        e.assert(os_ext.mkdir(tmp_output_dir))
+        lex_ctx = options.make_lex(options.lex_max_size)
+        dump_fd = e.assert(options.open(dump_path))
+        e.assert(options.mkdir(tmp_output_dir))
 
         if hooks_ctx.made_output_dir_handler then
             hooks_ctx:made_output_dir_handler(tmp_output_dir)
@@ -77,7 +81,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
             hooks_ctx:end_sort_chunks_handler()
         end
 
-        e.assert(e.os.rename(tmp_output_dir, output_dir))
+        e.assert(options.rename(tmp_output_dir, output_dir))
 
         if hooks_ctx.renamed_output_dir_handler then
             hooks_ctx:renamed_output_dir_handler(tmp_output_dir, output_dir)
