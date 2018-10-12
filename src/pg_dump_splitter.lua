@@ -35,12 +35,12 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     local lex_ctx
     local dump_fd
 
-    local res, err = e.xpcall(function()
+    local ok, err = e.xpcall(function()
         if hooks_ctx.begin_program_handler then
             hooks_ctx:begin_program_handler(dump_path, output_dir)
         end
 
-        local tmp_output_dir = 'asdasdasd' -- TODO !!!!!!!!
+        local tmp_output_dir = output_dir .. '.part'
 
         if hooks_ctx.tmp_output_dir_handler then
             tmp_output_dir = hooks_ctx:tmp_output_dir_handler(tmp_output_dir)
@@ -66,7 +66,6 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
         if hooks_ctx.end_split_to_chunks_handler then
             hooks_ctx:end_split_to_chunks_handler()
         end
-
         if hooks_ctx.begin_sort_chunks_handler then
             hooks_ctx:begin_sort_chunks_handler(tmp_output_dir)
         end
@@ -77,7 +76,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
             hooks_ctx:end_sort_chunks_handler()
         end
 
-        e.os.rename(tmp_output_dir, output_dir)
+        e.assert(e.os.rename(tmp_output_dir, output_dir))
 
         if hooks_ctx.renamed_output_dir_handler then
             hooks_ctx:renamed_output_dir_handler(tmp_output_dir, output_dir)
@@ -90,7 +89,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     if dump_fd then dump_fd:close() end
     if lex_ctx then lex_ctx:free() end
 
-    e.assert(res, err)
+    e.assert(ok, err)
 end
 
 return {
