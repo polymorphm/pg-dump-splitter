@@ -20,6 +20,7 @@
 #include "git-rev.h"
 
 #include "os-ext.h"
+#include "lex.h"
 #include "emb-libs.h"
 
 static const char *const argp_doc = "Splits Postgresql's dump file "
@@ -127,12 +128,10 @@ static struct argp argp =
 static int
 bootstrap (lua_State *L)
 {
-    luaL_requiref (
-            L, "os_ext", luaopen_os_ext, 0);
+    luaL_requiref (L, "os_ext", luaopen_os_ext, 0);
+    luaL_requiref (L, "lex", luaopen_lex, 0);
 
-    // TODO         other calls of luaL_requiref (...) here
-
-    lua_pop (L, 1); // TODO     increase pop value for more libs
+    lua_pop (L, 2);
 
     luaL_requiref (
             L, "pg_dump_splitter", luaopen_pg_dump_splitter, 0);

@@ -2,7 +2,7 @@
 
 local e, _ENV = _ENV
 
---local lex = e.require 'lex'
+local lex = e.require 'lex'
 local os_ext = e.require 'os_ext'
 
 --local function split_to_chunks(
@@ -12,6 +12,7 @@ local os_ext = e.require 'os_ext'
 
 local function make_default_options()
     return {
+        lex_max_size = 16 * 1024 * 1024,
         --split_to_chunks = split_to_chunks,
     }
 end
@@ -48,7 +49,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
             e.assert(tmp_output_dir, 'no tmp_output_dir')
         end
 
-        --lex_ctx = 
+        lex_ctx = lex.make_ctx(options.lex_max_size)
         dump_fd = e.assert(e.io.open(dump_path))
         os_ext.mkdir(tmp_output_dir)
 
@@ -57,7 +58,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
         end
         if hooks_ctx.begin_split_to_chunks_handler then
             hooks_ctx:begin_split_to_chunks_handler(
-                    dump_fd, dump_path, tmp_output_dir)
+                    lex_ctx, dump_fd, dump_path, tmp_output_dir)
         end
 
         --options.split_to_chunks(

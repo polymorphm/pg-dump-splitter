@@ -18,6 +18,7 @@ sources = [
   'main.c',
   'emb-libs.c',
   'os-ext.c',
+  'lex.c',
   lua_gen_src,
   git_rev_c,
 ]
