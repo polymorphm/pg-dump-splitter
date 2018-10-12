@@ -61,7 +61,8 @@ argp_parser (int key, char *arg, struct argp_state *state)
     switch (key)
     {
         case 'k':
-            if (arguments->hooks_path) {
+            if (arguments->hooks_path)
+            {
                 argp_error (state,
                         "attempt to redefine argument for option \"hooks\"");
 
@@ -73,7 +74,8 @@ argp_parser (int key, char *arg, struct argp_state *state)
             break;
 
         case ARGP_KEY_ARG:
-            if (state->arg_num >= 2) {
+            if (state->arg_num >= 2)
+            {
                 argp_error (state,
                         "too many arguments");
 
@@ -93,7 +95,8 @@ argp_parser (int key, char *arg, struct argp_state *state)
             break;
 
         case ARGP_KEY_END:
-            if (state->arg_num < 2) {
+            if (state->arg_num < 2)
+            {
                 argp_error (state,
                         "too few arguments");
 
@@ -125,7 +128,8 @@ luaopen_pg_dump_splitter (lua_State *L)
             EMBEDDED_PG_DUMP_SPLITTER_LUA_SIZE,
             "=pg_dump_splitter");
 
-    if (lua_err) {
+    if (lua_err)
+    {
         return lua_error (L);
     }
 
@@ -174,6 +178,13 @@ main (int argc, char *argv[])
     int exit_code = 0;
 
     lua_State *L = luaL_newstate ();
+
+    if (!L)
+    {
+        fprintf (stderr, "memory allocation error for lua state\n");
+        abort ();
+    }
+
     luaL_openlibs (L);
 
     lua_pushcfunction (L, traceback_msgh);
@@ -193,7 +204,8 @@ main (int argc, char *argv[])
 
     int lua_err = lua_pcall (L, 3, 0, -5);
 
-    if (lua_err) {
+    if (lua_err)
+    {
         fprintf (stderr, "%s\n", lua_tostring(L, -1));
         exit_code = 1;
     }
