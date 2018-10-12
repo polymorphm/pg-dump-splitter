@@ -23,12 +23,15 @@ os_ext_mkdir (lua_State *L)
 
     if (status)
     {
-        const char *err = strerror_l (errno, 0);
+        lua_pushboolean (L, 0);
+        lua_pushstring (L, strerror_l (errno, 0));
 
-        return luaL_error (L, "%s", err);
+        return 2;
     }
 
-    return 0;
+    lua_pushboolean (L, 1);
+
+    return 1;
 }
 
 static const luaL_Reg os_ext_reg[] =

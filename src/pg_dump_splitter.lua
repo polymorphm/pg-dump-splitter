@@ -51,7 +51,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
 
         lex_ctx = lex.make_ctx(options.lex_max_size)
         dump_fd = e.assert(e.io.open(dump_path))
-        os_ext.mkdir(tmp_output_dir)
+        e.assert(os_ext.mkdir(tmp_output_dir))
 
         if hooks_ctx.made_output_dir_handler then
             hooks_ctx:made_output_dir_handler(tmp_output_dir)
