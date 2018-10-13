@@ -1,6 +1,6 @@
 // vim: set et ts=4 sw=4:
 
-// free
+// abort, free
 #include <stdlib.h>
 
 // strdup
