@@ -6,6 +6,8 @@
 #include <lua.h>
 #include <lauxlib.h>
 
+#include "pg-dump-splitter.h"
+
 enum
 {
     lex_type_undefined,

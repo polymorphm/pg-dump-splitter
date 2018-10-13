@@ -2,3 +2,6 @@
 
 option('luac', type : 'string',
 	description : 'Path to luac program binary')
+option('make-lib', type : 'boolean', value : false,
+  description : 'Also make a shared object library')
+

@@ -4,7 +4,7 @@
 #include <lauxlib.h>
 
 #include "pg_dump_splitter.lua.h"
-#include "emb-libs.h"
+#include "pg-dump-splitter.h"
 
 int
 luaopen_pg_dump_splitter (lua_State *L)

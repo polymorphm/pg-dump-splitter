@@ -2,3 +2,9 @@
 
 int
 luaopen_pg_dump_splitter (lua_State *L);
+
+int
+luaopen_os_ext (lua_State *L);
+
+int
+luaopen_lex (lua_State *L);

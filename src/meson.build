@@ -10,7 +10,7 @@ git_rev_c = vcs_tag(command : ['git', 'describe', '--always', '--long', '--dirty
                   input : 'git-rev.c.in',
                   output : 'git-rev.c')
 
-lua_gen_src = embedder_lua_gen.process(
+lua_emb_src = embedder_lua_gen.process(
   'pg_dump_splitter.lua',
 )
 
@@ -19,10 +19,25 @@ sources = [
   'emb-libs.c',
   'os-ext.c',
   'lex.c',
-  lua_gen_src,
+  lua_emb_src,
   git_rev_c,
 ]
 
 executable('pg-dump-splitter', sources,
+           include_directories : inc,
            dependencies : lua_dep,
            install : true)
+
+if make_lib_opt
+  shared_sources = [
+    'emb-libs.c',
+    'os-ext.c',
+    'lex.c',
+    lua_emb_src,
+  ]
+
+  libs = shared_library('pg-dump-splitter', shared_sources,
+                 include_directories : inc,
+                 dependencies : lua_dep,
+                 install : true)
+endif

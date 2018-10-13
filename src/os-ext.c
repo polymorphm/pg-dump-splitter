@@ -12,7 +12,7 @@
 // mkdir S_I*
 #include <sys/stat.h>
 
-#include "os-ext.h"
+#include "pg-dump-splitter.h"
 
 static int
 os_ext_mkdir (lua_State *L)

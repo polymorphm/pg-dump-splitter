@@ -19,9 +19,7 @@
 #include "pg-dump-splitter-config.h"
 #include "git-rev.h"
 
-#include "os-ext.h"
-#include "lex.h"
-#include "emb-libs.h"
+#include "pg-dump-splitter.h"
 
 static const char *const argp_doc = "Splits Postgresql's dump file "
         "for easily using source code comparing tools "
