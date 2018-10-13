@@ -1,4 +1,4 @@
--- vim: set et ts=4 sw=4:
+-- vim: set et ts=2 sw=2:
 
 local e, _ENV = _ENV
 
@@ -6,98 +6,98 @@ local lex = e.require 'lex'
 local os_ext = e.require 'os_ext'
 
 --local function split_to_chunks(
---        lex_ctx, dump_fd, dump_path, output_dir, options, hooks_ctx, options)
---   TODO     detach to separete library file
+--    lex_ctx, dump_fd, dump_path, output_dir, options, hooks_ctx, options)
+--    TODO    detach to separete library file
 --end
 
 local function make_default_options()
-    return {
-        lex_max_size = 16 * 1024 * 1024,
-        make_lex = lex.make_ctx,
-        open = e.io.open,
-        mkdir = os_ext.mkdir,
-        rename = e.os.rename,
-        --split_to_chunks = split_to_chunks,
-    }
+  return {
+    lex_max_size = 16 * 1024 * 1024,
+    make_lex = lex.make_ctx,
+    open = e.io.open,
+    mkdir = os_ext.mkdir,
+    rename = e.os.rename,
+    --split_to_chunks = split_to_chunks,
+  }
 end
 
 local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
-    if not options then options = make_default_options() end
+  if not options then options = make_default_options() end
 
-    local hooks_ctx = {}
+  local hooks_ctx = {}
 
-    if hooks_path then
-        local hooks_lib_func = e.assert(e.loadfile(hooks_path))
-        local hooks_lib = hooks_lib_func(hooks_path)
+  if hooks_path then
+    local hooks_lib_func = e.assert(e.loadfile(hooks_path))
+    local hooks_lib = hooks_lib_func(hooks_path)
 
-        hooks_lib.register_hooks(hooks_ctx)
+    hooks_lib.register_hooks(hooks_ctx)
+  end
+
+  if hooks_ctx.options_handler then
+    hooks_ctx:options_handler(options)
+  end
+
+  local lex_ctx
+  local dump_fd
+
+  local ok, err = e.xpcall(function()
+    if hooks_ctx.begin_program_handler then
+      hooks_ctx:begin_program_handler(dump_path, output_dir)
     end
 
-    if hooks_ctx.options_handler then
-        hooks_ctx:options_handler(options)
+    local tmp_output_dir = output_dir .. '.part'
+
+    if hooks_ctx.tmp_output_dir_handler then
+      tmp_output_dir = hooks_ctx:tmp_output_dir_handler(tmp_output_dir)
+
+      e.assert(tmp_output_dir, 'no tmp_output_dir')
     end
 
-    local lex_ctx
-    local dump_fd
+    lex_ctx = options.make_lex(options.lex_max_size)
+    dump_fd = e.assert(options.open(dump_path))
+    e.assert(options.mkdir(tmp_output_dir))
 
-    local ok, err = e.xpcall(function()
-        if hooks_ctx.begin_program_handler then
-            hooks_ctx:begin_program_handler(dump_path, output_dir)
-        end
+    if hooks_ctx.made_output_dir_handler then
+      hooks_ctx:made_output_dir_handler(tmp_output_dir)
+    end
+    if hooks_ctx.begin_split_to_chunks_handler then
+      hooks_ctx:begin_split_to_chunks_handler(
+          lex_ctx, dump_fd, dump_path, tmp_output_dir)
+    end
 
-        local tmp_output_dir = output_dir .. '.part'
+    --options.split_to_chunks(
+    --    lex_ctx, dump_fd, dump_path, tmp_output_dir, hooks_ctx, options)
 
-        if hooks_ctx.tmp_output_dir_handler then
-            tmp_output_dir = hooks_ctx:tmp_output_dir_handler(tmp_output_dir)
+    if hooks_ctx.end_split_to_chunks_handler then
+      hooks_ctx:end_split_to_chunks_handler()
+    end
+    if hooks_ctx.begin_sort_chunks_handler then
+      hooks_ctx:begin_sort_chunks_handler(tmp_output_dir)
+    end
 
-            e.assert(tmp_output_dir, 'no tmp_output_dir')
-        end
+    --options.sort_chunks(tmp_output_dir, hooks_ctx, options)
 
-        lex_ctx = options.make_lex(options.lex_max_size)
-        dump_fd = e.assert(options.open(dump_path))
-        e.assert(options.mkdir(tmp_output_dir))
+    if hooks_ctx.end_sort_chunks_handler then
+      hooks_ctx:end_sort_chunks_handler()
+    end
 
-        if hooks_ctx.made_output_dir_handler then
-            hooks_ctx:made_output_dir_handler(tmp_output_dir)
-        end
-        if hooks_ctx.begin_split_to_chunks_handler then
-            hooks_ctx:begin_split_to_chunks_handler(
-                    lex_ctx, dump_fd, dump_path, tmp_output_dir)
-        end
+    e.assert(options.rename(tmp_output_dir, output_dir))
 
-        --options.split_to_chunks(
-        --        lex_ctx, dump_fd, dump_path, tmp_output_dir, hooks_ctx, options)
+    if hooks_ctx.renamed_output_dir_handler then
+      hooks_ctx:renamed_output_dir_handler(tmp_output_dir, output_dir)
+    end
+    if hooks_ctx.end_program_handler then
+      hooks_ctx:end_program_handler()
+    end
+  end, e.debug.traceback)
 
-        if hooks_ctx.end_split_to_chunks_handler then
-            hooks_ctx:end_split_to_chunks_handler()
-        end
-        if hooks_ctx.begin_sort_chunks_handler then
-            hooks_ctx:begin_sort_chunks_handler(tmp_output_dir)
-        end
+  if dump_fd then dump_fd:close() end
+  if lex_ctx then lex_ctx:free() end
 
-        --options.sort_chunks(tmp_output_dir, hooks_ctx, options)
-
-        if hooks_ctx.end_sort_chunks_handler then
-            hooks_ctx:end_sort_chunks_handler()
-        end
-
-        e.assert(options.rename(tmp_output_dir, output_dir))
-
-        if hooks_ctx.renamed_output_dir_handler then
-            hooks_ctx:renamed_output_dir_handler(tmp_output_dir, output_dir)
-        end
-        if hooks_ctx.end_program_handler then
-            hooks_ctx:end_program_handler()
-        end
-    end, e.debug.traceback)
-
-    if dump_fd then dump_fd:close() end
-    if lex_ctx then lex_ctx:free() end
-
-    e.assert(ok, err)
+  e.assert(ok, err)
 end
 
 return {
-    make_default_options = make_default_options,
-    pg_dump_splitter = pg_dump_splitter,
+  make_default_options = make_default_options,
+  pg_dump_splitter = pg_dump_splitter,
 }
