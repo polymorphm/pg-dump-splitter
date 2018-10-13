@@ -168,7 +168,7 @@ main (int argc, char *argv[])
 
     lua_State *L = luaL_newstate ();
 
-    if (!L)
+    if (__builtin_expect (!L, 0))
     {
         fprintf (stderr, "memory allocation error for lua state\n");
         abort ();
