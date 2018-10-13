@@ -130,7 +130,6 @@ bootstrap (lua_State *L)
 {
     luaL_requiref (L, "os_ext", luaopen_os_ext, 0);
     luaL_requiref (L, "lex", luaopen_lex, 0);
-
     lua_pop (L, 2);
 
     luaL_requiref (

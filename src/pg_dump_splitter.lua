@@ -13,7 +13,8 @@ local os_ext = std.require 'os_ext'
 local function make_default_options()
   return {
     lex_max_size = 16 * 1024 * 1024,
-    make_lex = lex.make_ctx,
+    lex_consts = lex.consts,
+    make_lex_ctx = lex.make_ctx,
     open = std.io.open,
     mkdir = os_ext.mkdir,
     rename = std.os.rename,
@@ -54,7 +55,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       std.assert(tmp_output_dir, 'no tmp_output_dir')
     end
 
-    lex_ctx = options.make_lex(options.lex_max_size)
+    lex_ctx = options.make_lex_ctx(options.lex_max_size)
     dump_fd = std.assert(options.open(dump_path))
     std.assert(options.mkdir(tmp_output_dir))
 
