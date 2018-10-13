@@ -1,9 +1,9 @@
 -- vim: set et ts=2 sw=2:
 
-local e, _ENV = _ENV
+local std, _ENV = _ENV
 
-local lex = e.require 'lex'
-local os_ext = e.require 'os_ext'
+local lex = std.require 'lex'
+local os_ext = std.require 'os_ext'
 
 --local function split_to_chunks(
 --    lex_ctx, dump_fd, dump_path, output_dir, options, hooks_ctx, options)
@@ -14,10 +14,11 @@ local function make_default_options()
   return {
     lex_max_size = 16 * 1024 * 1024,
     make_lex = lex.make_ctx,
-    open = e.io.open,
+    open = std.io.open,
     mkdir = os_ext.mkdir,
-    rename = e.os.rename,
-    --split_to_chunks = split_to_chunks,
+    rename = std.os.rename,
+    --split_to_chunks = XXXXXXX.split_to_chunks,
+    --sort_chunks = XXXXXXX.sort_chunks,
   }
 end
 
@@ -27,7 +28,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
   local hooks_ctx = {}
 
   if hooks_path then
-    local hooks_lib_func = e.assert(e.loadfile(hooks_path))
+    local hooks_lib_func = std.assert(std.loadfile(hooks_path))
     local hooks_lib = hooks_lib_func(hooks_path)
 
     hooks_lib.register_hooks(hooks_ctx)
@@ -40,7 +41,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
   local lex_ctx
   local dump_fd
 
-  local ok, err = e.xpcall(function()
+  local ok, err = std.xpcall(function()
     if hooks_ctx.begin_program_handler then
       hooks_ctx:begin_program_handler(dump_path, output_dir)
     end
@@ -50,12 +51,12 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     if hooks_ctx.tmp_output_dir_handler then
       tmp_output_dir = hooks_ctx:tmp_output_dir_handler(tmp_output_dir)
 
-      e.assert(tmp_output_dir, 'no tmp_output_dir')
+      std.assert(tmp_output_dir, 'no tmp_output_dir')
     end
 
     lex_ctx = options.make_lex(options.lex_max_size)
-    dump_fd = e.assert(options.open(dump_path))
-    e.assert(options.mkdir(tmp_output_dir))
+    dump_fd = std.assert(options.open(dump_path))
+    std.assert(options.mkdir(tmp_output_dir))
 
     if hooks_ctx.made_output_dir_handler then
       hooks_ctx:made_output_dir_handler(tmp_output_dir)
@@ -81,7 +82,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       hooks_ctx:end_sort_chunks_handler()
     end
 
-    e.assert(options.rename(tmp_output_dir, output_dir))
+    std.assert(options.rename(tmp_output_dir, output_dir))
 
     if hooks_ctx.renamed_output_dir_handler then
       hooks_ctx:renamed_output_dir_handler(tmp_output_dir, output_dir)
@@ -89,12 +90,12 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     if hooks_ctx.end_program_handler then
       hooks_ctx:end_program_handler()
     end
-  end, e.debug.traceback)
+  end, std.debug.traceback)
 
   if dump_fd then dump_fd:close() end
   if lex_ctx then lex_ctx:free() end
 
-  e.assert(ok, err)
+  std.assert(ok, err)
 end
 
 return {
