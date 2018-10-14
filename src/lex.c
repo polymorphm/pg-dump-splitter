@@ -1,12 +1,20 @@
 // vim: set et ts=4 sw=4:
 
-// abort, malloc, realloc, free
+// abort, realloc, free
 #include <stdlib.h>
+
+// memcpy
+#include <string.h>
+
+// fprintf, stderr
+#include <stdio.h>
 
 #include <lua.h>
 #include <lauxlib.h>
 
 #include "pg-dump-splitter.h"
+
+static const long lex_buf_init_size = 1024;
 
 enum
 {
@@ -51,8 +59,62 @@ struct lex_ctx
     // TODO     ... union for each specific type
 };
 
+static inline void
+push_to_buf (lua_State *L,
+        struct lex_ctx *ctx, const char *add, long add_size)
+{
+    if (__builtin_expect (!add_size, 0))
+    {
+        return;
+    }
 
+    long need_size = ctx->len + add_size;
+    long size = ctx->size;
 
+    if (__builtin_expect (need_size > size, 0))
+    {
+        long max_size = ctx->max_size;
+
+        if (__builtin_expect (need_size > max_size, 0))
+        {
+            luaL_error (L,
+                    "max_size lexeme buffer limit has exceeded: %I > %I",
+                    need_size, max_size);
+            __builtin_unreachable ();
+        }
+
+        if (__builtin_expect (!size, 0))
+        {
+            size = lex_buf_init_size;
+        }
+
+        do
+        {
+            size *= 2;
+        }
+        while (need_size > size);
+
+        if (__builtin_expect (size > max_size, 0))
+        {
+            size = need_size;
+        }
+
+        char *buf = realloc (ctx->buf, size);
+
+        if (__builtin_expect (!buf, 0))
+        {
+            fprintf (stderr,
+                    "memory reallocation error for lex_ctx buffer\n");
+            abort ();
+        }
+
+        ctx->buf = buf;
+        ctx->size = size;
+    }
+
+    memcpy (ctx->buf + ctx->len, add, add_size);
+    ctx->len += add_size;
+}
 
 static const char *lex_ctx_tname = "lex_ctx";
 
@@ -91,7 +153,7 @@ lex_free (lua_State *L)
     struct lex_ctx *ctx = luaL_checkudata (L, 1, lex_ctx_tname);
 
     free (ctx->buf);
-    ctx->buf = 0;
+    *ctx = (struct lex_ctx) {};
 
     return 0;
 }
