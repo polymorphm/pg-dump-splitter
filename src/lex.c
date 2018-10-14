@@ -47,6 +47,11 @@ struct lex_ctx
     long pos;       // current char position in stream, 1 based
     long line;      // current line position in stream, 1 based
     long col;       // current column position in stream, 1 based
+    long ppos;       // previous char position in stream, 1 based
+    long pline;      // previous line position in stream, 1 based
+    long pcol;       // previous column position in stream, 1 based
+    int type;       // current lexeme type
+    int subtype;    // current lexeme subtype
     long lpos;      // current lexeme char position in stream, 1 based
     long lline;     // current lexeme line position in stream, 1 based
     long lcol;      // current lexeme column positon in stream, 1 based
@@ -54,10 +59,24 @@ struct lex_ctx
     long len;       // current lexeme length
     char *buf;      // pointer to lexeme buffer, not zero terminated
     char stash;     // stashed char, to return to it next iteration
-    int type;       // current lexeme type
-    int subtype;    // current lexeme subtype
     // TODO     ... union for each specific type
 };
+
+static inline void
+set_lpos (struct lex_ctx *ctx)
+{
+    ctx->lpos = ctx->pos;
+    ctx->lline = ctx->line;
+    ctx->lcol = ctx->col;
+}
+
+static inline void
+set_plpos (struct lex_ctx *ctx)
+{
+    ctx->lpos = ctx->ppos;
+    ctx->lline = ctx->pline;
+    ctx->lcol = ctx->pcol;
+}
 
 static inline void
 push_to_buf (lua_State *L,
@@ -142,7 +161,161 @@ lex_feed (lua_State *L)
     const char *input = luaL_checklstring (L, 2, &input_len);
     luaL_checkany (L, 3); // callback function
 
-    // TODO     ...
+    inline void
+    store_result ()
+    {
+        //lua_pushvalue (L, 3);
+        // TODO lua_push....
+        // TODO lua_push....
+        // TODO lua_push....
+        // TODO lua_push....
+        // TODO lua_push....
+        //lua_call (L, ...., 0);
+    }
+
+    if (__builtin_expect (!input_len, 0))
+    {
+        // the final mark for flushing rest of buffer.
+        // it should not be counted in position counters
+
+        input = "\0";
+        input_len = 1;
+    }
+
+    for (int input_i = 0; input_i < input_len; ++input_i)
+    {
+        char stash;
+        char c = input[input_i];
+        __builtin_prefetch (input + input_i + 1);
+
+        if (__builtin_expect (c, 1))
+        {
+            ctx->ppos = ctx->pos;
+            ctx->pline = ctx->line;
+            ctx->pcol = ctx->col;
+
+            if (!ctx->line)
+            {
+                ctx->line = 1;
+            }
+            
+            ++ctx->pos;
+
+            if (c == '\n')
+            {
+                ++ctx->line;
+                ctx->col = 0;
+            }
+            else
+            {
+                ++ctx->col;
+            }
+        }
+
+retry_c:
+        stash = ctx->stash;
+        ctx->stash = 0;
+
+        switch (ctx->subtype)
+        {
+            case lex_subtype_undefined:
+                if (stash)
+                {
+                    if (stash == '-' && c == '-')
+                    {
+                        ctx->type = lex_type_comment;
+                        ctx->subtype = lex_subtype_sing_line_comment;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, "--", 2);
+                        break;
+                    }
+                    else if (stash == '/' && c == '*')
+                    {
+                        ctx->type = lex_type_comment;
+                        ctx->subtype = lex_subtype_mult_line_comment;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, "/*", 2);
+                        break;
+                    }
+                    else if ((stash == '-' || stash == '.') &&
+                            c >= '0' && c <= '9')
+                    {
+                        ctx->type = lex_type_number;
+                        ctx->subtype = lex_subtype_number;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        push_to_buf (L, ctx, &c, 1);
+                        break;
+                    }
+                    else if (stash == '-' || stash == '/')
+                    {
+                        ctx->type = lex_type_symbols;
+                        ctx->subtype = lex_subtype_random_symbols;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        goto retry_c;
+                    }
+                    else if (stash == '.')
+                    {
+                        ctx->type = lex_type_symbols;
+                        ctx->subtype = lex_subtype_special_symbols;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        goto retry_c;
+                    }
+                    else
+                    {
+                        return luaL_error (L,
+                                "pos(%I) line(%I) col(%I): "
+                                "unknown lexeme type started with characters: "
+                                "%d %d %c %c",
+                                ctx->pos, ctx->line, ctx->col,
+                                stash, c, stash, c);
+                    }
+                }
+                else
+                {
+                    switch (c)
+                    {
+                        // TODO ... ... ..
+                        // TODO ... ... ..
+                        // TODO ... ... ..
+
+                        case '-':
+                        case '/':
+                        case '.':
+                            ctx->stash = c;
+                            break;
+
+                        case ' ':
+                        case '\t':
+                        case '\v':
+                        case '\n':
+                        case '\r':
+                        case 0:
+                            break;
+
+                        default:
+                            return luaL_error (L,
+                                    "pos(%I) line(%I) col(%I): "
+                                    "unknown lexeme type started with character: "
+                                    "%d %c",
+                                    ctx->pos, ctx->line, ctx->col, c, c);
+                    }
+                }
+                break;
+
+                // TODO ... ... 
+
+            default:
+                fprintf (stderr,
+                        "pos(%li) line(%li) col(%li): "
+                        "unexpected program flow: switch (ctx->subtype): "
+                        "%d\n",
+                        ctx->pos, ctx->line, ctx->col, ctx->subtype);
+                abort ();
+        }
+    }
 
     return 0;
 }
