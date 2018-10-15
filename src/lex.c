@@ -35,8 +35,8 @@ enum
     lex_subtype_simple_string,
     lex_subtype_escape_string,
     lex_subtype_dollar_string,
-    lex_subtype_random_symbols,
     lex_subtype_special_symbols,
+    lex_subtype_random_symbols,
     lex_subtype_sing_line_comment,
     lex_subtype_mult_line_comment,
 };
@@ -158,7 +158,7 @@ lex_feed (lua_State *L)
 {
     struct lex_ctx *ctx = luaL_checkudata (L, 1, lex_ctx_tname);
     size_t input_len = 0;
-    const char *input = luaL_checklstring (L, 2, &input_len);
+    const char *input = lua_tolstring (L, 2, &input_len);
     luaL_checkany (L, 3); // callback function
 
     inline void
@@ -222,9 +222,88 @@ retry_c:
         {
             switch (c)
             {
-                // TODO ... ... ..
-                // TODO ... ... ..
-                // TODO ... ... ..
+                case 'a' ... 'd':
+                case 'f' ... 'z':
+                case 'A' ... 'D':
+                case 'F' ... 'Z':
+                case '_':
+                    // no cases 'e' 'E' here, cause of its stash behaviour.
+                    // no case '0' ... '9' here, cause of start ident
+
+                    ctx->type = lex_type_ident;
+                    ctx->subtype = lex_subtype_simple_ident;
+                    set_lpos (ctx);
+                    push_to_buf (L, ctx, &c, 1);
+                    break;
+
+                case '0' ... '9':
+                    ctx->type = lex_type_number;
+                    ctx->subtype = lex_subtype_number;
+                    set_lpos (ctx);
+                    push_to_buf (L, ctx, &c, 1);
+                    break;
+
+                case '\'':
+                    ctx->type = lex_type_string;
+                    ctx->subtype = lex_subtype_simple_string;
+                    set_lpos (ctx);
+                    push_to_buf (L, ctx, "\'", 1);
+                    break;
+
+                case '"':
+                    ctx->type = lex_type_ident;
+                    ctx->subtype = lex_subtype_quoted_ident;
+                    set_lpos (ctx);
+                    push_to_buf (L, ctx, "\"", 1);
+                    break;
+
+                case '$':
+                    ctx->type = lex_type_string;
+                    ctx->subtype = lex_subtype_dollar_string;
+                    set_lpos (ctx);
+                    push_to_buf (L, ctx, "$", 1);
+                    break;
+
+                case ',':
+                case ';':
+                case ':':
+                case '(':
+                case ')':
+                case '[':
+                case ']':
+                case '{':
+                case '}':
+                    // no case '.' here, cause of its stash behaviour
+
+                    ctx->type = lex_type_symbols;
+                    ctx->subtype = lex_subtype_special_symbols;
+                    set_lpos (ctx);
+                    push_to_buf (L, ctx, &c, 1);
+                    break;
+
+                case '`':
+                case '~':
+                case '!':
+                case '@':
+                case '#':
+                case '%':
+                case '^':
+                case '&':
+                case '*':
+                case '+':
+                case '=':
+                case '\\':
+                case '|':
+                case '<':
+                case '>':
+                case '?':
+                    // no cases '-' '/' here, cause of its stash behaviour
+
+                    ctx->type = lex_type_symbols;
+                    ctx->subtype = lex_subtype_random_symbols;
+                    set_lpos (ctx);
+                    push_to_buf (L, ctx, &c, 1);
+                    break;
 
                 case '-':
                 case '/':
