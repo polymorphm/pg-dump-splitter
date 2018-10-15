@@ -184,6 +184,7 @@ lex_feed (lua_State *L)
 
     for (int input_i = 0; input_i < input_len; ++input_i)
     {
+        __label__ retry_c;
         char stash;
         char c = input[input_i];
         __builtin_prefetch (input + input_i + 1);
@@ -198,7 +199,7 @@ lex_feed (lua_State *L)
             {
                 ctx->line = 1;
             }
-            
+
             ++ctx->pos;
 
             if (c == '\n')
@@ -216,117 +217,131 @@ retry_c:
         stash = ctx->stash;
         ctx->stash = 0;
 
+        inline void
+        undefined_non_stash ()
+        {
+            switch (c)
+            {
+                // TODO ... ... ..
+                // TODO ... ... ..
+                // TODO ... ... ..
+
+                case '-':
+                case '/':
+                case '.':
+                case 'e':
+                case 'E':
+                    ctx->stash = c;
+                    break;
+
+                case ' ':
+                case '\t':
+                case '\v':
+                case '\n':
+                case '\r':
+                case 0:
+                    break;
+
+                default:
+                    luaL_error (L,
+                            "pos(%I) line(%I) col(%I): "
+                            "unknown lexeme type started with character: "
+                            "%d %c",
+                            ctx->pos, ctx->line, ctx->col, c, c);
+                    __builtin_unreachable ();
+            }
+        }
+
+        inline void
+        undefined_stash ()
+        {
+            switch (stash)
+            {
+                case '-':
+                case '/':
+                case '.':
+                    if (stash == '-' && c == '-')
+                    {
+                        ctx->type = lex_type_comment;
+                        ctx->subtype = lex_subtype_sing_line_comment;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, "--", 2);
+                    }
+                    else if (stash == '/' && c == '*')
+                    {
+                        ctx->type = lex_type_comment;
+                        ctx->subtype = lex_subtype_mult_line_comment;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, "/*", 2);
+                    }
+                    else if ((stash == '-' || stash == '.') &&
+                            c >= '0' && c <= '9')
+                    {
+                        ctx->type = lex_type_number;
+                        ctx->subtype = lex_subtype_number;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        push_to_buf (L, ctx, &c, 1);
+                    }
+                    else if (stash == '.')
+                    {
+                        ctx->type = lex_type_symbols;
+                        ctx->subtype = lex_subtype_special_symbols;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        goto retry_c;
+                    }
+                    else
+                    {
+                        ctx->type = lex_type_symbols;
+                        ctx->subtype = lex_subtype_random_symbols;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        goto retry_c;
+                    }
+                    break;
+
+                case 'e':
+                case 'E':
+                    if (c == '\'')
+                    {
+                        ctx->type = lex_type_string;
+                        ctx->subtype = lex_subtype_escape_string;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        push_to_buf (L, ctx, &c, 1);
+                    }
+                    else
+                    {
+                        ctx->type = lex_type_ident;
+                        ctx->subtype = lex_subtype_simple_ident;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        goto retry_c;
+                    }
+                    break;
+
+                default:
+                    luaL_error (L,
+                            "pos(%I) line(%I) col(%I): "
+                            "unknown lexeme type started with characters: "
+                            "%d %d %c %c",
+                            ctx->pos, ctx->line, ctx->col,
+                            stash, c, stash, c);
+                    __builtin_unreachable ();
+            }
+        }
+
         switch (ctx->subtype)
         {
             case lex_subtype_undefined:
                 if (stash)
                 {
-                    switch (stash)
-                    {
-                        case '-':
-                        case '/':
-                        case '.':
-                            if (stash == '-' && c == '-')
-                            {
-                                ctx->type = lex_type_comment;
-                                ctx->subtype = lex_subtype_sing_line_comment;
-                                set_plpos (ctx);
-                                push_to_buf (L, ctx, "--", 2);
-                            }
-                            else if (stash == '/' && c == '*')
-                            {
-                                ctx->type = lex_type_comment;
-                                ctx->subtype = lex_subtype_mult_line_comment;
-                                set_plpos (ctx);
-                                push_to_buf (L, ctx, "/*", 2);
-                            }
-                            else if ((stash == '-' || stash == '.') &&
-                                    c >= '0' && c <= '9')
-                            {
-                                ctx->type = lex_type_number;
-                                ctx->subtype = lex_subtype_number;
-                                set_plpos (ctx);
-                                push_to_buf (L, ctx, &stash, 1);
-                                push_to_buf (L, ctx, &c, 1);
-                            }
-                            else if (stash == '.')
-                            {
-                                ctx->type = lex_type_symbols;
-                                ctx->subtype = lex_subtype_special_symbols;
-                                set_plpos (ctx);
-                                push_to_buf (L, ctx, &stash, 1);
-                                goto retry_c;
-                            }
-                            else
-                            {
-                                ctx->type = lex_type_symbols;
-                                ctx->subtype = lex_subtype_random_symbols;
-                                set_plpos (ctx);
-                                push_to_buf (L, ctx, &stash, 1);
-                                goto retry_c;
-                            }
-                            break;
-
-                        case 'e':
-                        case 'E':
-                            if (c == '\'')
-                            {
-                                ctx->type = lex_type_string;
-                                ctx->subtype = lex_subtype_escape_string;
-                                set_plpos (ctx);
-                                push_to_buf (L, ctx, &stash, 1);
-                                push_to_buf (L, ctx, &c, 1);
-                            }
-                            else
-                            {
-                                ctx->type = lex_type_ident;
-                                ctx->subtype = lex_subtype_simple_ident;
-                                set_plpos (ctx);
-                                push_to_buf (L, ctx, &stash, 1);
-                                goto retry_c;
-                            }
-                            break;
-
-                        default:
-                            return luaL_error (L,
-                                    "pos(%I) line(%I) col(%I): "
-                                    "unknown lexeme type started with characters: "
-                                    "%d %d %c %c",
-                                    ctx->pos, ctx->line, ctx->col,
-                                    stash, c, stash, c);
-                    }
+                    undefined_stash ();
                 }
                 else
                 {
-                    switch (c)
-                    {
-                        // TODO ... ... ..
-                        // TODO ... ... ..
-                        // TODO ... ... ..
-
-                        case '-':
-                        case '/':
-                        case '.':
-                        case 'e':
-                        case 'E':
-                            ctx->stash = c;
-                            break;
-
-                        case ' ':
-                        case '\t':
-                        case '\v':
-                        case '\n':
-                        case '\r':
-                        case 0:
-                            break;
-
-                        default:
-                            return luaL_error (L,
-                                    "pos(%I) line(%I) col(%I): "
-                                    "unknown lexeme type started with character: "
-                                    "%d %c",
-                                    ctx->pos, ctx->line, ctx->col, c, c);
-                    }
+                    undefined_non_stash ();
                 }
                 break;
 
