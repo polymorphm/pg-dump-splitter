@@ -227,8 +227,8 @@ retry_c:
                 case 'A' ... 'D':
                 case 'F' ... 'Z':
                 case '_':
-                    // no cases 'e' 'E' here, cause of its stash behaviour.
-                    // no case '0' ... '9' here, cause of start ident
+                    // no cases 'e' 'E' here, cause of them stash behaviour.
+                    // no case '0' ... '9' here, cause of starting ident lexeme
 
                     ctx->type = lex_type_ident;
                     ctx->subtype = lex_subtype_simple_ident;
@@ -292,12 +292,11 @@ retry_c:
                 case '*':
                 case '+':
                 case '=':
-                case '\\':
                 case '|':
                 case '<':
                 case '>':
                 case '?':
-                    // no cases '-' '/' here, cause of its stash behaviour
+                    // no cases '-' '/' here, cause of them stash behaviour
 
                     ctx->type = lex_type_symbols;
                     ctx->subtype = lex_subtype_random_symbols;
@@ -320,6 +319,9 @@ retry_c:
                 case '\r':
                 case 0:
                     break;
+
+                // we don't look for '\\',
+                // cause we consider it is forbidden for starting lexeme
 
                 default:
                     luaL_error (L,
