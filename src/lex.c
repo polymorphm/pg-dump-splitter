@@ -324,8 +324,13 @@ retry_c:
                 case 0:
                     break;
 
-                // we don't look for '\\',
-                // cause we consider it is forbidden for starting lexeme
+                case '\\':
+                    luaL_error (L,
+                            "pos(%I) line(%I) col(%I): "
+                            "lexeme type started with \"\\\" "
+                            "is forbidden",
+                            ctx->pos, ctx->line, ctx->col);
+                    __builtin_unreachable ();
 
                 default:
                     luaL_error (L,
