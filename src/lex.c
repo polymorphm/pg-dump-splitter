@@ -218,7 +218,7 @@ retry_c:
         ctx->stash = 0;
 
         inline void
-        undefined_non_stash ()
+        undefined_wo_stash ()
         {
             switch (c)
             {
@@ -334,7 +334,7 @@ retry_c:
         }
 
         inline void
-        undefined_stash ()
+        undefined_with_stash ()
         {
             switch (stash)
             {
@@ -413,20 +413,54 @@ retry_c:
             }
         }
 
+        inline void
+        sing_line_comment () {
+            // TODO ...
+        }
+
+        inline void
+        mult_line_comment_wo_stash ()
+        {
+            // TODO ...
+        }
+
+        inline void
+        mult_line_comment_with_stash ()
+        {
+            // TODO ...
+        }
+
         switch (ctx->subtype)
         {
             case lex_subtype_undefined:
                 if (stash)
                 {
-                    undefined_stash ();
+                    undefined_with_stash ();
                 }
                 else
                 {
-                    undefined_non_stash ();
+                    undefined_wo_stash ();
                 }
                 break;
 
-                // TODO ... ... 
+
+                // TODO ... ...
+
+
+            case lex_subtype_sing_line_comment:
+                sing_line_comment ();
+                break;
+
+            case lex_subtype_mult_line_comment:
+                if (stash)
+                {
+                    mult_line_comment_with_stash ();
+                }
+                else
+                {
+                    mult_line_comment_wo_stash ();
+                }
+                break;
 
             default:
                 fprintf (stderr,
