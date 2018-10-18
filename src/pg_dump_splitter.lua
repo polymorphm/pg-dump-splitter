@@ -10,22 +10,24 @@ local os_ext = std.require 'os_ext'
 --    TODO    detach to separete library file
 --end
 
+local function init_default_options(options)
+  options.lex_max_size = 16 * 1024 * 1024
+  options.lex_consts = lex.consts
+  options.make_lex_ctx = lex.make_ctx
+  options.open = std.io.open
+  options.mkdir = os_ext.mkdir
+  options.rename = std.os.rename
+  --options.split_to_chunks = XXXXXXX.split_to_chunks
+  --options.sort_chunks = XXXXXXX.sort_chunks
+end
+
 local function make_default_options()
-  return {
-    lex_max_size = 16 * 1024 * 1024,
-    lex_consts = lex.consts,
-    make_lex_ctx = lex.make_ctx,
-    open = std.io.open,
-    mkdir = os_ext.mkdir,
-    rename = std.os.rename,
-    --split_to_chunks = XXXXXXX.split_to_chunks,
-    --sort_chunks = XXXXXXX.sort_chunks,
-  }
+  local options = {}
+  init_default_options(options)
+  return options
 end
 
 local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
-  if not options then options = make_default_options() end
-
   local hooks_ctx = {}
 
   if hooks_path then
@@ -100,6 +102,7 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
 end
 
 return {
+  init_default_options = init_default_options,
   make_default_options = make_default_options,
   pg_dump_splitter = pg_dump_splitter,
 }

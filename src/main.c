@@ -133,13 +133,15 @@ bootstrap (lua_State *L)
     luaL_requiref (
             L, "pg_dump_splitter", luaopen_pg_dump_splitter, 0);
 
-    lua_getfield (L, -1, "pg_dump_splitter");
+    lua_getfield (L, -1, "make_default_options");
+    lua_call (L, 0, 1); // return to var options
 
-    lua_pushvalue (L, 1);
-    lua_pushvalue (L, 2);
-    lua_pushvalue (L, 3);
-
-    lua_call (L, 3, 0);
+    lua_getfield (L, -2, "pg_dump_splitter");
+    lua_pushvalue (L, 1); // arg dump_path
+    lua_pushvalue (L, 2); // arg output_dir
+    lua_pushvalue (L, 3); // arg hooks_path
+    lua_pushvalue (L, -5); // var options
+    lua_call (L, 4, 0);
 
     return 0;
 }
