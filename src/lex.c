@@ -223,11 +223,13 @@ retry_c:
             switch (c)
             {
                 case 'a' ... 'd':
-                case 'f' ... 'z':
+                case 'f' ... 't':
+                case 'v' ... 'z':
                 case 'A' ... 'D':
-                case 'F' ... 'Z':
+                case 'F' ... 'T':
+                case 'V' ... 'Z':
                 case '_':
-                    // no cases 'e' 'E' here, cause of them stash behaviour.
+                    // no cases 'e' 'E' 'u' 'U' here, cause of them stash behaviour.
                     // no case '0' ... '9' here, cause of starting ident lexeme
 
                     ctx->type = lex_type_ident;
@@ -309,6 +311,8 @@ retry_c:
                 case '.':
                 case 'e':
                 case 'E':
+                case 'u':
+                case 'U':
                     ctx->stash = c;
                     break;
 
@@ -391,6 +395,27 @@ retry_c:
                         set_plpos (ctx);
                         push_to_buf (L, ctx, &stash, 1);
                         push_to_buf (L, ctx, &c, 1);
+                    }
+                    else
+                    {
+                        ctx->type = lex_type_ident;
+                        ctx->subtype = lex_subtype_simple_ident;
+                        set_plpos (ctx);
+                        push_to_buf (L, ctx, &stash, 1);
+                        goto retry_c;
+                    }
+                    break;
+
+                case 'u':
+                case 'U':
+                    if (c == '&')
+                    {
+                        luaL_error (L,
+                                "pos(%I) line(%I) col(%I): "
+                                "lexeme type started with \"u&\" "
+                                "is not supported yet",
+                                ctx->pos, ctx->line, ctx->col);
+                        __builtin_unreachable ();
                     }
                     else
                     {
