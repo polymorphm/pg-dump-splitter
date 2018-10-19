@@ -429,7 +429,18 @@ retry_c:
                 case '\v':
                 case '\n':
                 case '\r':
+                    break;
+
                 case 0:
+                    ctx->pos = 0;
+                    ctx->line = 0;
+                    ctx->col = 0;
+                    ctx->ppos = 0;
+                    ctx->pline = 0;
+                    ctx->pcol = 0;
+                    ctx->lpos = 0;
+                    ctx->lline = 0;
+                    ctx->lcol = 0;
                     break;
 
                 case '\\':
