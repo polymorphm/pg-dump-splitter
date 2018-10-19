@@ -135,6 +135,31 @@ push_to_buf (lua_State *L,
     ctx->len += add_size;
 }
 
+static void
+push_sing_line_comment_translated (lua_State *L, long len, const char *buf)
+{
+    if (len <= 2 || buf[0] != '-' || buf[1] != '-')
+    {
+        lua_pushnil (L);
+        return;
+    }
+
+    lua_pushlstring (L, buf + 2, len - 2);
+}
+
+static void
+push_mult_line_comment_translated (lua_State *L, long len, const char *buf)
+{
+    if (len <= 4 || buf[0] != '/' || buf[1] != '*' ||
+            buf[len - 2] != '*' || buf[len - 1] != '/')
+    {
+        lua_pushnil (L);
+        return;
+    }
+
+    lua_pushlstring (L, buf + 2, len - 4);
+}
+
 static const char *lex_ctx_tname = "lex_ctx";
 
 static int
@@ -161,16 +186,46 @@ lex_feed (lua_State *L)
     const char *input = lua_tolstring (L, 2, &input_len);
     luaL_checkany (L, 3); // callback function
 
-    inline void
-    store_result ()
+    void
+    yield_lexeme ()
     {
-        //lua_pushvalue (L, 3);
-        // TODO lua_push....
-        // TODO lua_push....
-        // TODO lua_push....
-        // TODO lua_push....
-        // TODO lua_push....
-        //lua_call (L, ...., 0);
+        if (lua_isnil (L, 3)) // arg callback
+        {
+            return;
+        }
+
+        lua_pushvalue (L, 3);
+
+        lua_pushinteger (L, ctx->type);
+        lua_pushinteger (L, ctx->subtype);
+        lua_createtable (L, 0, 3);
+        lua_pushinteger (L, ctx->lpos);
+        lua_setfield (L, -2, "lpos");
+        lua_pushinteger (L, ctx->lline);
+        lua_setfield (L, -2, "lline");
+        lua_pushinteger (L, ctx->lcol);
+        lua_setfield (L, -2, "lcol");
+        lua_pushlstring (L, ctx->buf, ctx->len);
+
+        switch (ctx->subtype)
+        {
+
+
+            // TODO ... ... ...
+
+            case lex_subtype_sing_line_comment:
+                push_sing_line_comment_translated (L, ctx->len, ctx->buf);
+                break;
+
+            case lex_subtype_mult_line_comment:
+                push_mult_line_comment_translated (L, ctx->len, ctx->buf);
+                break;
+
+            default:
+                lua_pushnil (L); // translated value is unknown
+        }
+
+        lua_call (L, 5, 0);
     }
 
     if (__builtin_expect (!input_len, 0))
@@ -445,19 +500,62 @@ retry_c:
 
         inline void
         sing_line_comment () {
-            // TODO ...
+            switch (c)
+            {
+                case '\n':
+                case 0:
+                    yield_lexeme ();
+
+                    ctx->type = lex_type_undefined;
+                    ctx->subtype = lex_subtype_undefined;
+                    set_lpos (ctx);
+                    ctx->len = 0;
+                    goto retry_c;
+
+                default:
+                    push_to_buf (L, ctx, &c, 1);
+            }
         }
 
         inline void
         mult_line_comment_wo_stash ()
         {
-            // TODO ...
+            switch (c)
+            {
+                case '*':
+                    ctx->stash = c;
+                    break;
+
+                case 0:
+                    luaL_error (L,
+                            "pos(%I) line(%I) col(%I): "
+                            "unterminated lexeme: mult_line_comment",
+                            ctx->pos, ctx->line, ctx->col);
+                    __builtin_unreachable ();
+
+                default:
+                    push_to_buf (L, ctx, &c, 1);
+            }
         }
 
         inline void
         mult_line_comment_with_stash ()
         {
-            // TODO ...
+            if (stash == '*' && c == '/')
+            {
+                push_to_buf (L, ctx, "*/", 2);
+                yield_lexeme ();
+
+                ctx->type = lex_type_undefined;
+                ctx->subtype = lex_subtype_undefined;
+                set_lpos (ctx);
+                ctx->len = 0;
+            }
+            else
+            {
+                push_to_buf (L, ctx, &stash, 1);
+                goto retry_c;
+            }
         }
 
         switch (ctx->subtype)
