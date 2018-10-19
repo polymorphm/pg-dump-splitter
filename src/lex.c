@@ -248,7 +248,7 @@ lex_feed (lua_State *L)
         input_len = 1;
     }
 
-    for (int input_i = 0; input_i < input_len; ++input_i)
+    for (size_t input_i = 0; input_i < input_len; ++input_i)
     {
         __label__ retry_c;
         char stash;
