@@ -212,12 +212,13 @@ lex_feed (lua_State *L)
     struct lex_ctx *ctx = luaL_checkudata (L, 1, lex_ctx_tname);
     size_t input_len = 0;
     const char *input = lua_tolstring (L, 2, &input_len);
-    luaL_checkany (L, 3); // callback function
+    int not_exists_callback = lua_isnil (L, 3); // arg: callback function
+    int trans_more = lua_toboolean (L, 4); // arg: translate more?
 
     void
     yield_lexeme ()
     {
-        if (lua_isnil (L, 3)) // arg callback
+        if (not_exists_callback)
         {
             return;
         }
@@ -237,20 +238,33 @@ lex_feed (lua_State *L)
 
         switch (ctx->subtype)
         {
-
-
-            // TODO ... ... ...
-
-            case lex_subtype_sing_line_comment:
-                push_sing_line_comment_translated (L, ctx->len, ctx->buf);
-                break;
-
-            case lex_subtype_mult_line_comment:
-                push_mult_line_comment_translated (L, ctx->len, ctx->buf);
-                break;
+            // TODO     case simple ident, quote ident
 
             default:
-                lua_pushnil (L); // translated value is unknown
+                if (trans_more)
+                {
+                    switch (ctx->subtype)
+                    {
+
+
+                        // TODO ... ... ...
+
+                        case lex_subtype_sing_line_comment:
+                            push_sing_line_comment_translated (L, ctx->len, ctx->buf);
+                            break;
+
+                        case lex_subtype_mult_line_comment:
+                            push_mult_line_comment_translated (L, ctx->len, ctx->buf);
+                            break;
+
+                        default:
+                            lua_pushnil (L); // translated value is unknown
+                    }
+                }
+                else
+                {
+                    lua_pushnil (L);
+                }
         }
 
         lua_call (L, 5, 0);
