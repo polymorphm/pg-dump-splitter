@@ -78,8 +78,65 @@ set_plpos (struct lex_ctx *ctx)
     ctx->lcol = ctx->pcol;
 }
 
+static void
+realloc_buf (struct lex_ctx *ctx, long need_size)
+{
+    long size = ctx->size;
+
+    if (__builtin_expect (!size, 0))
+    {
+        size = lex_buf_init_size;
+    }
+
+    do
+    {
+        size *= 2;
+    }
+    while (need_size > size);
+
+    if (__builtin_expect (size > ctx->max_size, 0))
+    {
+        size = need_size;
+    }
+
+    char *buf = realloc (ctx->buf, size);
+
+    if (__builtin_expect (!buf, 0))
+    {
+        fprintf (stderr,
+                "memory reallocation error for lex_ctx buffer\n");
+        abort ();
+    }
+
+    ctx->buf = buf;
+    ctx->size = size;
+}
+
 static inline void
-push_to_buf (lua_State *L,
+push_c_to_buf (lua_State *L,
+        struct lex_ctx *ctx, char add)
+{
+    long need_size = ctx->len + 1;
+
+    if (__builtin_expect (need_size > ctx->size, 0))
+    {
+        if (__builtin_expect (need_size > ctx->max_size, 0))
+        {
+            luaL_error (L,
+                    "max_size lexeme buffer limit has exceeded: %I > %I",
+                    need_size, ctx->max_size);
+            __builtin_unreachable ();
+        }
+
+        realloc_buf (ctx, need_size);
+    }
+
+    ctx->buf[ctx->len] = add;
+    ctx->len += 1;
+}
+
+static inline void
+push_str_to_buf (lua_State *L,
         struct lex_ctx *ctx, const char *add, long add_size)
 {
     if (__builtin_expect (!add_size, 0))
@@ -88,47 +145,18 @@ push_to_buf (lua_State *L,
     }
 
     long need_size = ctx->len + add_size;
-    long size = ctx->size;
 
-    if (__builtin_expect (need_size > size, 0))
+    if (__builtin_expect (need_size > ctx->size, 0))
     {
-        long max_size = ctx->max_size;
-
-        if (__builtin_expect (need_size > max_size, 0))
+        if (__builtin_expect (need_size > ctx->max_size, 0))
         {
             luaL_error (L,
                     "max_size lexeme buffer limit has exceeded: %I > %I",
-                    need_size, max_size);
+                    need_size, ctx->max_size);
             __builtin_unreachable ();
         }
 
-        if (__builtin_expect (!size, 0))
-        {
-            size = lex_buf_init_size;
-        }
-
-        do
-        {
-            size *= 2;
-        }
-        while (need_size > size);
-
-        if (__builtin_expect (size > max_size, 0))
-        {
-            size = need_size;
-        }
-
-        char *buf = realloc (ctx->buf, size);
-
-        if (__builtin_expect (!buf, 0))
-        {
-            fprintf (stderr,
-                    "memory reallocation error for lex_ctx buffer\n");
-            abort ();
-        }
-
-        ctx->buf = buf;
-        ctx->size = size;
+        realloc_buf (ctx, need_size);
     }
 
     memcpy (ctx->buf + ctx->len, add, add_size);
@@ -301,35 +329,35 @@ retry_c:
                     ctx->type = lex_type_ident;
                     ctx->subtype = lex_subtype_simple_ident;
                     set_lpos (ctx);
-                    push_to_buf (L, ctx, &c, 1);
+                    push_c_to_buf (L, ctx, c);
                     break;
 
                 case '0' ... '9':
                     ctx->type = lex_type_number;
                     ctx->subtype = lex_subtype_number;
                     set_lpos (ctx);
-                    push_to_buf (L, ctx, &c, 1);
+                    push_c_to_buf (L, ctx, c);
                     break;
 
                 case '\'':
                     ctx->type = lex_type_string;
                     ctx->subtype = lex_subtype_simple_string;
                     set_lpos (ctx);
-                    push_to_buf (L, ctx, "\'", 1);
+                    push_c_to_buf (L, ctx, '\'');
                     break;
 
                 case '"':
                     ctx->type = lex_type_ident;
                     ctx->subtype = lex_subtype_quoted_ident;
                     set_lpos (ctx);
-                    push_to_buf (L, ctx, "\"", 1);
+                    push_c_to_buf (L, ctx, '"');
                     break;
 
                 case '$':
                     ctx->type = lex_type_string;
                     ctx->subtype = lex_subtype_dollar_string;
                     set_lpos (ctx);
-                    push_to_buf (L, ctx, "$", 1);
+                    push_c_to_buf (L, ctx, '$');
                     break;
 
                 case ',':
@@ -346,7 +374,7 @@ retry_c:
                     ctx->type = lex_type_symbols;
                     ctx->subtype = lex_subtype_special_symbols;
                     set_lpos (ctx);
-                    push_to_buf (L, ctx, &c, 1);
+                    push_c_to_buf (L, ctx, c);
                     break;
 
                 case '`':
@@ -369,7 +397,7 @@ retry_c:
                     ctx->type = lex_type_symbols;
                     ctx->subtype = lex_subtype_random_symbols;
                     set_lpos (ctx);
-                    push_to_buf (L, ctx, &c, 1);
+                    push_c_to_buf (L, ctx, c);
                     break;
 
                 case '-':
@@ -421,14 +449,14 @@ retry_c:
                         ctx->type = lex_type_comment;
                         ctx->subtype = lex_subtype_sing_line_comment;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, "--", 2);
+                        push_str_to_buf (L, ctx, "--", 2);
                     }
                     else if (stash == '/' && c == '*')
                     {
                         ctx->type = lex_type_comment;
                         ctx->subtype = lex_subtype_mult_line_comment;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, "/*", 2);
+                        push_str_to_buf (L, ctx, "/*", 2);
                     }
                     else if ((stash == '-' || stash == '.') &&
                             c >= '0' && c <= '9')
@@ -436,15 +464,15 @@ retry_c:
                         ctx->type = lex_type_number;
                         ctx->subtype = lex_subtype_number;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, &stash, 1);
-                        push_to_buf (L, ctx, &c, 1);
+                        push_c_to_buf (L, ctx, stash);
+                        push_c_to_buf (L, ctx, c);
                     }
                     else if (stash == '.')
                     {
                         ctx->type = lex_type_symbols;
                         ctx->subtype = lex_subtype_special_symbols;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, &stash, 1);
+                        push_c_to_buf (L, ctx, stash);
                         goto retry_c;
                     }
                     else
@@ -452,7 +480,7 @@ retry_c:
                         ctx->type = lex_type_symbols;
                         ctx->subtype = lex_subtype_random_symbols;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, &stash, 1);
+                        push_c_to_buf (L, ctx, stash);
                         goto retry_c;
                     }
                     break;
@@ -464,15 +492,15 @@ retry_c:
                         ctx->type = lex_type_string;
                         ctx->subtype = lex_subtype_escape_string;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, &stash, 1);
-                        push_to_buf (L, ctx, &c, 1);
+                        push_c_to_buf (L, ctx, stash);
+                        push_c_to_buf (L, ctx, c);
                     }
                     else
                     {
                         ctx->type = lex_type_ident;
                         ctx->subtype = lex_subtype_simple_ident;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, &stash, 1);
+                        push_c_to_buf (L, ctx, stash);
                         goto retry_c;
                     }
                     break;
@@ -493,7 +521,7 @@ retry_c:
                         ctx->type = lex_type_ident;
                         ctx->subtype = lex_subtype_simple_ident;
                         set_plpos (ctx);
-                        push_to_buf (L, ctx, &stash, 1);
+                        push_c_to_buf (L, ctx, stash);
                         goto retry_c;
                     }
                     break;
@@ -519,7 +547,7 @@ retry_c:
                     goto retry_c;
 
                 default:
-                    push_to_buf (L, ctx, &c, 1);
+                    push_c_to_buf (L, ctx, c);
             }
         }
 
@@ -540,7 +568,7 @@ retry_c:
                     __builtin_unreachable ();
 
                 default:
-                    push_to_buf (L, ctx, &c, 1);
+                    push_c_to_buf (L, ctx, c);
             }
         }
 
@@ -549,12 +577,12 @@ retry_c:
         {
             if (stash == '*' && c == '/')
             {
-                push_to_buf (L, ctx, "*/", 2);
+                push_str_to_buf (L, ctx, "*/", 2);
                 finish_lexeme ();
             }
             else
             {
-                push_to_buf (L, ctx, &stash, 1);
+                push_c_to_buf (L, ctx, stash);
                 goto retry_c;
             }
         }
