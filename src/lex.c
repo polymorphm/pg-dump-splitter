@@ -228,6 +228,17 @@ lex_feed (lua_State *L)
         lua_call (L, 5, 0);
     }
 
+    void
+    finish_lexeme ()
+    {
+        yield_lexeme ();
+
+        ctx->type = lex_type_undefined;
+        ctx->subtype = lex_subtype_undefined;
+        set_lpos (ctx);
+        ctx->len = 0;
+    }
+
     if (__builtin_expect (!input_len, 0))
     {
         // the final mark for flushing rest of buffer.
@@ -504,12 +515,7 @@ retry_c:
             {
                 case '\n':
                 case 0:
-                    yield_lexeme ();
-
-                    ctx->type = lex_type_undefined;
-                    ctx->subtype = lex_subtype_undefined;
-                    set_lpos (ctx);
-                    ctx->len = 0;
+                    finish_lexeme ();
                     goto retry_c;
 
                 default:
@@ -544,12 +550,7 @@ retry_c:
             if (stash == '*' && c == '/')
             {
                 push_to_buf (L, ctx, "*/", 2);
-                yield_lexeme ();
-
-                ctx->type = lex_type_undefined;
-                ctx->subtype = lex_subtype_undefined;
-                set_lpos (ctx);
-                ctx->len = 0;
+                finish_lexeme ();
             }
             else
             {
