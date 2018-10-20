@@ -1,5 +1,5 @@
-// vim: set et ts=4 sw=4:
-
 #include "git-rev.h"
 
 const char *pg_dump_splitter_git_rev = "@VCS_TAG@";
+
+// vi:ts=4:sw=4:et

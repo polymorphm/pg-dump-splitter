@@ -1,5 +1,3 @@
-// vim: set et ts=4 sw=4:
-
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -47,3 +45,5 @@ luaopen_os_ext (lua_State *L)
 
     return 1;
 }
+
+// vi:ts=4:sw=4:et

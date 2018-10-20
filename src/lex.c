@@ -1,5 +1,3 @@
-// vim: set et ts=4 sw=4:
-
 // abort, realloc, free
 #include <stdlib.h>
 
@@ -737,3 +735,5 @@ luaopen_lex (lua_State *L)
 
     return 1;
 }
+
+// vi:ts=4:sw=4:et

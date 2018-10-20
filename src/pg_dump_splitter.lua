@@ -1,5 +1,3 @@
--- vim: set et ts=2 sw=2:
-
 local std, _ENV = _ENV
 
 local lex = std.require 'lex'
@@ -106,3 +104,5 @@ return {
   make_default_options = make_default_options,
   pg_dump_splitter = pg_dump_splitter,
 }
+
+-- vi:ts=2:sw=2:et

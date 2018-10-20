@@ -1,5 +1,3 @@
-# vim: set et ts=2 sw=2:
-
 embedder_py = find_program('embedder.py')
 
 embedder_gen = generator(
@@ -22,3 +20,5 @@ if luac_program.found()
 else
   embedder_lua_gen = embedder_gen
 endif
+
+# vi:ts=2:sw=2:et

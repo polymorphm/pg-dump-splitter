@@ -1,5 +1,3 @@
-// vim: set et ts=4 sw=4:
-
 // abort, free
 #include <stdlib.h>
 
@@ -202,3 +200,5 @@ main (int argc, char *argv[])
 
     return exit_code;
 }
+
+// vi:ts=4:sw=4:et

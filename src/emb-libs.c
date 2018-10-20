@@ -1,5 +1,3 @@
-// vim: set et ts=4 sw=4:
-
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -24,3 +22,5 @@ luaopen_pg_dump_splitter (lua_State *L)
 
     return 1;
 }
+
+// vi:ts=4:sw=4:et

@@ -1,5 +1,4 @@
 #!/bin/bash
-# vim: set et ts=2 sw=2:
 
 set -e
 
@@ -19,3 +18,5 @@ output_h_path="$6"
 "$luac" -o "$output_c_path.luac" -- "$input_path"
 
 exec -- "$embedder_py" "$plainname" "$output_c_path.luac" "$output_c_path" "$output_h_path"
+
+# vi:ts=2:sw=2:et
