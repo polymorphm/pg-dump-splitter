@@ -162,6 +162,41 @@ push_str_to_buf (lua_State *L,
 }
 
 static void
+push_quoted_lexeme_translated (lua_State *L,
+        long len, const char *buf, char q)
+{
+    if (len < 2 || buf[0] != q || buf[len - 1] != q)
+    {
+        lua_pushnil (L);
+        return;
+    }
+
+    luaL_Buffer B;
+    char *out = luaL_buffinitsize (L, &B, len);
+    long sz = 0;
+    long l = len - 1;
+    char c = 0;
+    char pc = 0;
+
+    for (long i = 1; i < l; ++i)
+    {
+        c = buf[i];
+        if (pc == q && c == q)
+        {
+            c = 0;
+        }
+        else
+        {
+            out[sz] = c;
+            ++sz;
+        }
+        pc = c;
+    }
+
+    luaL_pushresultsize (&B, sz);
+}
+
+static void
 push_sing_line_comment_translated (lua_State *L, long len, const char *buf)
 {
     if (len < 2 || buf[0] != '-' || buf[1] != '-')
@@ -236,16 +271,31 @@ lex_feed (lua_State *L)
 
         switch (ctx->subtype)
         {
-            // TODO     case simple ident, quote ident
+            case lex_subtype_simple_ident:
+                lua_pushlstring (L, ctx->buf, ctx->len);
+                lua_getfield (L, -1, "lower");
+                lua_insert (L, lua_absindex (L, -2));
+                lua_call (L, 1, 1);
+                break;
+
+            case lex_subtype_quoted_ident:
+                push_quoted_lexeme_translated (L, ctx->len, ctx->buf, '"');
+                break;
 
             default:
                 if (trans_more)
                 {
                     switch (ctx->subtype)
                     {
+                        case lex_subtype_simple_string:
+                            push_quoted_lexeme_translated (L, ctx->len, ctx->buf, '\'');
+                            break;
 
+                        // unimplemented yet: ``case lex_subtype_escape_string: ...``
 
-                        // TODO ... ... ...
+                        //case lex_subtype_dollar_string:
+                        //    // TODO ... ...
+                        //    break;
 
                         case lex_subtype_sing_line_comment:
                             push_sing_line_comment_translated (
@@ -258,7 +308,7 @@ lex_feed (lua_State *L)
                             break;
 
                         default:
-                            lua_pushnil (L); // translated value is unknown
+                            lua_pushnil (L);
                     }
                 }
                 else
@@ -562,7 +612,64 @@ retry_c:
         }
 
         inline void
-        sing_line_comment () {
+        simple_ident ()
+        {
+            switch (c)
+            {
+                case 'a' ... 'z':
+                case 'A' ... 'Z':
+                case '_':
+                case '0' ... '9':
+                    push_c_to_buf (L, ctx, c);
+                    break;
+
+                default:
+                    finish_lexeme ();
+                    goto retry_c;
+            }
+        }
+
+        inline void
+        quoted_ident_wo_stash ()
+        {
+            switch (c)
+            {
+                case '"':
+                    ctx->stash = c;
+                    break;
+
+                case 0:
+                    luaL_error (L,
+                            "pos(%I) line(%I) col(%I): "
+                            "unterminated lexeme: quoted_ident",
+                            ctx->pos, ctx->line, ctx->col);
+                    __builtin_unreachable ();
+
+                default:
+                    push_c_to_buf (L, ctx, c);
+            }
+        }
+
+        inline void
+        quoted_ident_with_stash ()
+        {
+            if (stash == '"' && c == '"')
+            {
+                push_str_to_buf (L, ctx, "\"\"", 2);
+            }
+            else
+            {
+                push_c_to_buf (L, ctx, stash);
+                finish_lexeme ();
+                goto retry_c;
+            }
+        }
+
+
+
+        inline void
+        sing_line_comment ()
+        {
             switch (c)
             {
                 case '\n':
@@ -623,6 +730,23 @@ retry_c:
                     undefined_wo_stash ();
                 }
                 break;
+
+            case lex_subtype_simple_ident:
+                simple_ident ();
+                break;
+
+            case lex_subtype_quoted_ident:
+                if (stash)
+                {
+                    quoted_ident_with_stash ();
+                }
+                else
+                {
+                    quoted_ident_wo_stash ();
+                }
+                break;
+
+            //case lex_subtype_number:
 
 
                 // TODO ... ...
