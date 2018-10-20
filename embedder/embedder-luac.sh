@@ -15,7 +15,7 @@ input_path="$4"
 output_c_path="$5"
 output_h_path="$6"
 
-"$luac" -o "$output_c_path.luac" -- "$input_path"
+"$luac" -s -o "$output_c_path.luac" -- "$input_path"
 
 exec -- "$embedder_py" "$plainname" "$output_c_path.luac" "$output_c_path" "$output_h_path"
 
