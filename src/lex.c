@@ -620,6 +620,12 @@ lex_feed (lua_State *L)
         switch (c)
         {
             case '"':
+                if (__builtin_expect (!ctx->len, 0))
+                {
+                    fprintf (stderr, "unexpected program flow\n");
+                    abort ();
+                }
+
                 ctx->stash = c;
                 break;
 
@@ -638,7 +644,7 @@ lex_feed (lua_State *L)
     inline void
     quoted_ident_with_stash ()
     {
-        if (stash != '"') {
+        if (__builtin_expect (stash != '"', 0)) {
             fprintf (stderr, "unexpected program flow\n");
             abort ();
         }
@@ -783,6 +789,64 @@ lex_feed (lua_State *L)
         }
     }
 
+
+
+    // TODO ... ...
+
+
+    inline void
+    special_symbols ()
+    {
+        if (__builtin_expect (!ctx->len, 0))
+        {
+            fprintf (stderr, "unexpected program flow\n");
+            abort ();
+        }
+
+        if (ctx->len == 1 && (c == '.' || c == ':') &&
+                    ctx->buf[0] == c)
+        {
+            push_c_to_buf (L, ctx, c);
+            finish_lexeme ();
+        }
+        else
+        {
+            finish_lexeme ();
+            goto retry_c;
+        }
+    }
+
+    inline void
+    random_symbols ()
+    {
+        switch (c)
+        {
+            case '`':
+            case '~':
+            case '!':
+            case '@':
+            case '#':
+            case '%':
+            case '^':
+            case '&':
+            case '*':
+            case '-':
+            case '=':
+            case '+':
+            case '|':
+            case '<':
+            case '>':
+            case '?':
+            case '/':
+                push_c_to_buf (L, ctx, c);
+                break;
+
+            default:
+                finish_lexeme ();
+                goto retry_c;
+        }
+    }
+
     inline void
     sing_line_comment ()
     {
@@ -804,6 +868,12 @@ lex_feed (lua_State *L)
         switch (c)
         {
             case '*':
+                if (__builtin_expect (ctx->len < 2, 0))
+                {
+                    fprintf (stderr, "unexpected program flow\n");
+                    abort ();
+                }
+
                 ctx->stash = c;
                 break;
 
@@ -822,7 +892,7 @@ lex_feed (lua_State *L)
     inline void
     mult_line_comment_with_stash ()
     {
-        if (stash != '*') {
+        if (__builtin_expect (stash != '*', 0)) {
             fprintf (stderr, "unexpected program flow\n");
             abort ();
         }
@@ -922,6 +992,13 @@ retry_stash:
 
                 // TODO ... ...
 
+            case lex_subtype_special_symbols:
+                special_symbols ();
+                break;
+
+            case lex_subtype_random_symbols:
+                random_symbols ();
+                break;
 
             case lex_subtype_sing_line_comment:
                 sing_line_comment ();
