@@ -789,9 +789,82 @@ lex_feed (lua_State *L)
         }
     }
 
+    inline void
+    simple_string_wo_stash ()
+    {
+        switch (c)
+        {
+            case '\'':
+                if (__builtin_expect (!ctx->len, 0))
+                {
+                    fprintf (stderr, "unexpected program flow\n");
+                    abort ();
+                }
+
+                ctx->stash = c;
+                break;
+
+            case 0:
+                luaL_error (L,
+                        "pos(%I) line(%I) col(%I): "
+                        "unterminated lexeme: simple_string",
+                        ctx->pos, ctx->line, ctx->col);
+                __builtin_unreachable ();
+
+            default:
+                push_c_to_buf (L, ctx, c);
+        }
+    }
+
+    inline void
+    escape_string_wo_stash ()
+    {
+        switch (c)
+        {
+            case '\'':
+                if (__builtin_expect (ctx->len < 2, 0))
+                {
+                    fprintf (stderr, "unexpected program flow\n");
+                    abort ();
+                }
+
+                ctx->stash = c;
+                break;
+
+            case 0:
+                luaL_error (L,
+                        "pos(%I) line(%I) col(%I): "
+                        "unterminated lexeme: escape_string",
+                        ctx->pos, ctx->line, ctx->col);
+                __builtin_unreachable ();
+
+            default:
+                push_c_to_buf (L, ctx, c);
+        }
+    }
+
+    inline void
+    simple_or_escape_string_with_stash ()
+    {
+        if (__builtin_expect (stash != '\'', 0)) {
+            fprintf (stderr, "unexpected program flow\n");
+            abort ();
+        }
+
+        if (c == '\'')
+        {
+            push_str_to_buf (L, ctx, "''", 2);
+        }
+        else
+        {
+            push_c_to_buf (L, ctx, stash);
+            finish_lexeme ();
+            goto retry_c;
+        }
+    }
 
 
-    // TODO ... ...
+    // TODO ... dollar string ...
 
 
     inline void
@@ -990,7 +1063,29 @@ retry_stash:
                 }
                 break;
 
-                // TODO ... ...
+            case lex_subtype_simple_string:
+                if (stash)
+                {
+                    simple_or_escape_string_with_stash ();
+                }
+                else
+                {
+                    simple_string_wo_stash ();
+                }
+                break;
+
+            case lex_subtype_escape_string:
+                if (stash)
+                {
+                    simple_or_escape_string_with_stash ();
+                }
+                else
+                {
+                    escape_string_wo_stash ();
+                }
+                break;
+
+                // TODO ... dollar string ...
 
             case lex_subtype_special_symbols:
                 special_symbols ();
