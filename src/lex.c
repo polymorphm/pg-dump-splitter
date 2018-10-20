@@ -255,11 +255,15 @@ lex_make_ctx (lua_State *L)
 static int
 lex_feed (lua_State *L)
 {
+    __label__ retry_c, retry_stash;
+
     struct lex_ctx *ctx = luaL_checkudata (L, 1, lex_ctx_tname);
     size_t input_len = 0;
     const char *input = lua_tolstring (L, 2, &input_len);
     int not_exists_callback = lua_isnil (L, 3); // arg: callback function
     int trans_more = lua_toboolean (L, 4); // arg: translate more?
+
+    char stash, c;
 
     void
     yield_lexeme ()
@@ -301,7 +305,8 @@ lex_feed (lua_State *L)
                     switch (ctx->subtype)
                     {
                         case lex_subtype_simple_string:
-                            push_quoted_lexeme_translated (L, ctx->len, ctx->buf, '\'');
+                            push_quoted_lexeme_translated (
+                                    L, ctx->len, ctx->buf, '\'');
                             break;
 
                         // XXX  unimplemented yet:
@@ -351,6 +356,489 @@ lex_feed (lua_State *L)
         ctx->state = (union lex_ctx_state) {};
     }
 
+    inline void
+    undefined_wo_stash ()
+    {
+        switch (c)
+        {
+            case 'a' ... 'd':
+            case 'f' ... 't':
+            case 'v' ... 'z':
+            case 'A' ... 'D':
+            case 'F' ... 'T':
+            case 'V' ... 'Z':
+            case '_':
+                // no cases 'e' 'E' 'u' 'U' here, cause of them stash behaviour.
+                // no case '0' ... '9' here, cause of starting ident lexeme
+
+                ctx->type = lex_type_ident;
+                ctx->subtype = lex_subtype_simple_ident;
+                set_lpos (ctx);
+                push_c_to_buf (L, ctx, c);
+                break;
+
+            case '0' ... '9':
+                ctx->type = lex_type_number;
+                ctx->subtype = lex_subtype_number;
+                set_lpos (ctx);
+                push_c_to_buf (L, ctx, c);
+                break;
+
+            case '\'':
+                ctx->type = lex_type_string;
+                ctx->subtype = lex_subtype_simple_string;
+                set_lpos (ctx);
+                push_c_to_buf (L, ctx, '\'');
+                break;
+
+            case '"':
+                ctx->type = lex_type_ident;
+                ctx->subtype = lex_subtype_quoted_ident;
+                set_lpos (ctx);
+                push_c_to_buf (L, ctx, '"');
+                break;
+
+            case '$':
+                ctx->type = lex_type_string;
+                ctx->subtype = lex_subtype_dollar_string;
+                set_lpos (ctx);
+                push_c_to_buf (L, ctx, '$');
+                break;
+
+            case ',':
+            case ';':
+            case ':':
+            case '(':
+            case ')':
+            case '[':
+            case ']':
+            case '{':
+            case '}':
+                // no case '.' here, cause of its stash behaviour
+
+                ctx->type = lex_type_symbols;
+                ctx->subtype = lex_subtype_special_symbols;
+                set_lpos (ctx);
+                push_c_to_buf (L, ctx, c);
+                break;
+
+            case '`':
+            case '~':
+            case '!':
+            case '@':
+            case '#':
+            case '%':
+            case '^':
+            case '&':
+            case '*':
+            case '=':
+            case '|':
+            case '<':
+            case '>':
+            case '?':
+                // no cases '-' '+' '/' here, cause of them stash behaviour
+
+                ctx->type = lex_type_symbols;
+                ctx->subtype = lex_subtype_random_symbols;
+                set_lpos (ctx);
+                push_c_to_buf (L, ctx, c);
+                break;
+
+            case '-':
+            case '+':
+            case '/':
+            case '.':
+            case 'e':
+            case 'E':
+            case 'u':
+            case 'U':
+                ctx->stash = c;
+                break;
+
+            case ' ':
+            case '\t':
+            case '\v':
+            case '\n':
+            case '\r':
+                break;
+
+            case 0:
+                ctx->pos = 0;
+                ctx->line = 0;
+                ctx->col = 0;
+                ctx->ppos = 0;
+                ctx->pline = 0;
+                ctx->pcol = 0;
+                ctx->lpos = 0;
+                ctx->lline = 0;
+                ctx->lcol = 0;
+                break;
+
+            case '\\':
+                luaL_error (L,
+                        "pos(%I) line(%I) col(%I): "
+                        "lexeme type started with \"\\\" "
+                        "is forbidden",
+                        ctx->pos, ctx->line, ctx->col);
+                __builtin_unreachable ();
+
+            default:
+                luaL_error (L,
+                        "pos(%I) line(%I) col(%I): "
+                        "unknown lexeme type started with character: "
+                        "%d %c",
+                        ctx->pos, ctx->line, ctx->col, c, c);
+                __builtin_unreachable ();
+        }
+    }
+
+    inline void
+    undefined_with_stash ()
+    {
+        switch (stash)
+        {
+            case '-':
+            case '+':
+            case '/':
+            case '.':
+                if (stash == '-' && c == '-')
+                {
+                    ctx->type = lex_type_comment;
+                    ctx->subtype = lex_subtype_sing_line_comment;
+                    set_plpos (ctx);
+                    push_str_to_buf (L, ctx, "--", 2);
+                }
+                else if (stash == '/' && c == '*')
+                {
+                    ctx->type = lex_type_comment;
+                    ctx->subtype = lex_subtype_mult_line_comment;
+                    set_plpos (ctx);
+                    push_str_to_buf (L, ctx, "/*", 2);
+                }
+                else if ((stash == '-' || stash == '.') &&
+                        c >= '0' && c <= '9')
+                {
+                    // XXX  we don't support numbers like ``-.123`` yet
+
+                    ctx->type = lex_type_number;
+                    ctx->subtype = lex_subtype_number;
+                    set_plpos (ctx);
+                    push_c_to_buf (L, ctx, stash);
+                    push_c_to_buf (L, ctx, c);
+                }
+                else if (stash == '.')
+                {
+                    ctx->type = lex_type_symbols;
+                    ctx->subtype = lex_subtype_special_symbols;
+                    set_plpos (ctx);
+                    push_c_to_buf (L, ctx, stash);
+                    goto retry_c;
+                }
+                else
+                {
+                    ctx->type = lex_type_symbols;
+                    ctx->subtype = lex_subtype_random_symbols;
+                    set_plpos (ctx);
+                    push_c_to_buf (L, ctx, stash);
+                    goto retry_c;
+                }
+                break;
+
+            case 'e':
+            case 'E':
+                if (c == '\'')
+                {
+                    ctx->type = lex_type_string;
+                    ctx->subtype = lex_subtype_escape_string;
+                    set_plpos (ctx);
+                    push_c_to_buf (L, ctx, stash);
+                    push_c_to_buf (L, ctx, c);
+                }
+                else
+                {
+                    ctx->type = lex_type_ident;
+                    ctx->subtype = lex_subtype_simple_ident;
+                    set_plpos (ctx);
+                    push_c_to_buf (L, ctx, stash);
+                    goto retry_c;
+                }
+                break;
+
+            case 'u':
+            case 'U':
+                if (c == '&')
+                {
+                    luaL_error (L,
+                            "pos(%I) line(%I) col(%I): "
+                            "lexeme type started with \"u&\" "
+                            "is not supported yet",
+                            ctx->pos, ctx->line, ctx->col);
+                    __builtin_unreachable ();
+                }
+                else
+                {
+                    ctx->type = lex_type_ident;
+                    ctx->subtype = lex_subtype_simple_ident;
+                    set_plpos (ctx);
+                    push_c_to_buf (L, ctx, stash);
+                    goto retry_c;
+                }
+                break;
+
+            default:
+                luaL_error (L,
+                        "pos(%I) line(%I) col(%I): "
+                        "unknown lexeme type started with characters: "
+                        "%d %d %c %c",
+                        ctx->pos, ctx->line, ctx->col,
+                        stash, c, stash, c);
+                __builtin_unreachable ();
+        }
+    }
+
+    inline void
+    simple_ident ()
+    {
+        switch (c)
+        {
+            case 'a' ... 'z':
+            case 'A' ... 'Z':
+            case '_':
+            case '0' ... '9':
+                push_c_to_buf (L, ctx, c);
+                break;
+
+            default:
+                finish_lexeme ();
+                goto retry_c;
+        }
+    }
+
+    inline void
+    quoted_ident_wo_stash ()
+    {
+        switch (c)
+        {
+            case '"':
+                ctx->stash = c;
+                break;
+
+            case 0:
+                luaL_error (L,
+                        "pos(%I) line(%I) col(%I): "
+                        "unterminated lexeme: quoted_ident",
+                        ctx->pos, ctx->line, ctx->col);
+                __builtin_unreachable ();
+
+            default:
+                push_c_to_buf (L, ctx, c);
+        }
+    }
+
+    inline void
+    quoted_ident_with_stash ()
+    {
+        if (stash != '"') {
+            fprintf (stderr, "unexpected program flow\n");
+            abort ();
+        }
+
+        if (c == '"')
+        {
+            push_str_to_buf (L, ctx, "\"\"", 2);
+        }
+        else
+        {
+            push_c_to_buf (L, ctx, stash);
+            finish_lexeme ();
+            goto retry_c;
+        }
+    }
+
+    inline void
+    number_wo_stash ()
+    {
+        switch (c)
+        {
+            case '-':
+            case '+':
+                if (ctx->len &&
+                        ctx->len != ctx->state.number.e_len)
+                {
+                    finish_lexeme_with_state ();
+                    goto retry_c;
+                }
+                else
+                {
+                    ctx->stash = c;
+                    break;
+                }
+
+            case '0' ... '9':
+                push_c_to_buf (L, ctx, c);
+                break;
+
+            case 'e':
+            case 'E':
+                if (ctx->state.number.has_e)
+                {
+                    finish_lexeme_with_state ();
+                    goto retry_c;
+                }
+                else
+                {
+                    ctx->stash = c;
+                    break;
+                }
+
+            case '.':
+                if (ctx->state.number.has_dot)
+                {
+                    finish_lexeme_with_state ();
+                    goto retry_c;
+                }
+                else
+                {
+                    ctx->stash = c;
+                    break;
+                }
+
+            default:
+                finish_lexeme_with_state ();
+                goto retry_c;
+        }
+    }
+
+    inline void
+    number_with_stash ()
+    {
+        switch (stash)
+        {
+            case '-':
+            case '+':
+                switch (c)
+                {
+                    case '.':
+                        if (ctx->state.number.has_e)
+                        {
+                            finish_lexeme_with_state ();
+                            goto retry_stash;
+                        }
+                        __attribute__ ((fallthrough));
+                    case '0' ... '9':
+                        push_c_to_buf (L, ctx, stash);
+                        push_c_to_buf (L, ctx, c);
+                        break;
+
+                    default:
+                        finish_lexeme_with_state ();
+                        goto retry_stash;
+                }
+                break;
+
+            case '.':
+                if (c == '.')
+                {
+                    finish_lexeme_with_state ();
+                    goto retry_stash;
+                }
+                else
+                {
+                    push_c_to_buf (L, ctx, stash);
+                    ctx->state.number.has_dot = 1;
+                    goto retry_c;
+                }
+
+            case 'e':
+            case 'E':
+                switch (c)
+                {
+                    case '-':
+                    case '+':
+                    case '0' ... '9':
+                        push_c_to_buf (L, ctx, stash);
+                        ctx->state.number.has_e = 1;
+                        ctx->state.number.e_len = ctx->len;
+                        ctx->state.number.has_dot = 1;
+
+                        if (c == '-' || c == '+')
+                        {
+                            goto retry_c;
+                        }
+                        else
+                        {
+                            push_c_to_buf (L, ctx, c);
+                            break;
+                        }
+
+                    default:
+                        finish_lexeme_with_state ();
+                        goto retry_stash;
+                }
+                break;
+
+            default:
+                fprintf (stderr, "unexpected program flow\n");
+                abort ();
+        }
+    }
+
+    inline void
+    sing_line_comment ()
+    {
+        switch (c)
+        {
+            case '\n':
+            case 0:
+                finish_lexeme ();
+                goto retry_c;
+
+            default:
+                push_c_to_buf (L, ctx, c);
+        }
+    }
+
+    inline void
+    mult_line_comment_wo_stash ()
+    {
+        switch (c)
+        {
+            case '*':
+                ctx->stash = c;
+                break;
+
+            case 0:
+                luaL_error (L,
+                        "pos(%I) line(%I) col(%I): "
+                        "unterminated lexeme: mult_line_comment",
+                        ctx->pos, ctx->line, ctx->col);
+                __builtin_unreachable ();
+
+            default:
+                push_c_to_buf (L, ctx, c);
+        }
+    }
+
+    inline void
+    mult_line_comment_with_stash ()
+    {
+        if (stash != '*') {
+            fprintf (stderr, "unexpected program flow\n");
+            abort ();
+        }
+
+        if (c == '/')
+        {
+            push_str_to_buf (L, ctx, "*/", 2);
+            finish_lexeme ();
+        }
+        else
+        {
+            push_c_to_buf (L, ctx, stash);
+            goto retry_c;
+        }
+    }
+
     if (__builtin_expect (!input_len, 0))
     {
         // the final mark for flushing rest of buffer.
@@ -362,10 +850,7 @@ lex_feed (lua_State *L)
 
     for (size_t input_i = 0; input_i < input_len; ++input_i)
     {
-        __label__ retry_c;
-        __label__ retry_stash;
-        char stash;
-        char c = input[input_i];
+        c = input[input_i];
 
         if (__builtin_expect (c, 1))
         {
@@ -394,489 +879,6 @@ lex_feed (lua_State *L)
 retry_c:
         stash = ctx->stash;
         ctx->stash = 0;
-
-        inline void
-        undefined_wo_stash ()
-        {
-            switch (c)
-            {
-                case 'a' ... 'd':
-                case 'f' ... 't':
-                case 'v' ... 'z':
-                case 'A' ... 'D':
-                case 'F' ... 'T':
-                case 'V' ... 'Z':
-                case '_':
-                    // no cases 'e' 'E' 'u' 'U' here, cause of them stash behaviour.
-                    // no case '0' ... '9' here, cause of starting ident lexeme
-
-                    ctx->type = lex_type_ident;
-                    ctx->subtype = lex_subtype_simple_ident;
-                    set_lpos (ctx);
-                    push_c_to_buf (L, ctx, c);
-                    break;
-
-                case '0' ... '9':
-                    ctx->type = lex_type_number;
-                    ctx->subtype = lex_subtype_number;
-                    set_lpos (ctx);
-                    push_c_to_buf (L, ctx, c);
-                    break;
-
-                case '\'':
-                    ctx->type = lex_type_string;
-                    ctx->subtype = lex_subtype_simple_string;
-                    set_lpos (ctx);
-                    push_c_to_buf (L, ctx, '\'');
-                    break;
-
-                case '"':
-                    ctx->type = lex_type_ident;
-                    ctx->subtype = lex_subtype_quoted_ident;
-                    set_lpos (ctx);
-                    push_c_to_buf (L, ctx, '"');
-                    break;
-
-                case '$':
-                    ctx->type = lex_type_string;
-                    ctx->subtype = lex_subtype_dollar_string;
-                    set_lpos (ctx);
-                    push_c_to_buf (L, ctx, '$');
-                    break;
-
-                case ',':
-                case ';':
-                case ':':
-                case '(':
-                case ')':
-                case '[':
-                case ']':
-                case '{':
-                case '}':
-                    // no case '.' here, cause of its stash behaviour
-
-                    ctx->type = lex_type_symbols;
-                    ctx->subtype = lex_subtype_special_symbols;
-                    set_lpos (ctx);
-                    push_c_to_buf (L, ctx, c);
-                    break;
-
-                case '`':
-                case '~':
-                case '!':
-                case '@':
-                case '#':
-                case '%':
-                case '^':
-                case '&':
-                case '*':
-                case '=':
-                case '|':
-                case '<':
-                case '>':
-                case '?':
-                    // no cases '-' '+' '/' here, cause of them stash behaviour
-
-                    ctx->type = lex_type_symbols;
-                    ctx->subtype = lex_subtype_random_symbols;
-                    set_lpos (ctx);
-                    push_c_to_buf (L, ctx, c);
-                    break;
-
-                case '-':
-                case '+':
-                case '/':
-                case '.':
-                case 'e':
-                case 'E':
-                case 'u':
-                case 'U':
-                    ctx->stash = c;
-                    break;
-
-                case ' ':
-                case '\t':
-                case '\v':
-                case '\n':
-                case '\r':
-                    break;
-
-                case 0:
-                    ctx->pos = 0;
-                    ctx->line = 0;
-                    ctx->col = 0;
-                    ctx->ppos = 0;
-                    ctx->pline = 0;
-                    ctx->pcol = 0;
-                    ctx->lpos = 0;
-                    ctx->lline = 0;
-                    ctx->lcol = 0;
-                    break;
-
-                case '\\':
-                    luaL_error (L,
-                            "pos(%I) line(%I) col(%I): "
-                            "lexeme type started with \"\\\" "
-                            "is forbidden",
-                            ctx->pos, ctx->line, ctx->col);
-                    __builtin_unreachable ();
-
-                default:
-                    luaL_error (L,
-                            "pos(%I) line(%I) col(%I): "
-                            "unknown lexeme type started with character: "
-                            "%d %c",
-                            ctx->pos, ctx->line, ctx->col, c, c);
-                    __builtin_unreachable ();
-            }
-        }
-
-        inline void
-        undefined_with_stash ()
-        {
-            switch (stash)
-            {
-                case '-':
-                case '+':
-                case '/':
-                case '.':
-                    if (stash == '-' && c == '-')
-                    {
-                        ctx->type = lex_type_comment;
-                        ctx->subtype = lex_subtype_sing_line_comment;
-                        set_plpos (ctx);
-                        push_str_to_buf (L, ctx, "--", 2);
-                    }
-                    else if (stash == '/' && c == '*')
-                    {
-                        ctx->type = lex_type_comment;
-                        ctx->subtype = lex_subtype_mult_line_comment;
-                        set_plpos (ctx);
-                        push_str_to_buf (L, ctx, "/*", 2);
-                    }
-                    else if ((stash == '-' || stash == '.') &&
-                            c >= '0' && c <= '9')
-                    {
-                        // XXX  we don't support numbers like ``-.123`` yet
-
-                        ctx->type = lex_type_number;
-                        ctx->subtype = lex_subtype_number;
-                        set_plpos (ctx);
-                        push_c_to_buf (L, ctx, stash);
-                        push_c_to_buf (L, ctx, c);
-                    }
-                    else if (stash == '.')
-                    {
-                        ctx->type = lex_type_symbols;
-                        ctx->subtype = lex_subtype_special_symbols;
-                        set_plpos (ctx);
-                        push_c_to_buf (L, ctx, stash);
-                        goto retry_c;
-                    }
-                    else
-                    {
-                        ctx->type = lex_type_symbols;
-                        ctx->subtype = lex_subtype_random_symbols;
-                        set_plpos (ctx);
-                        push_c_to_buf (L, ctx, stash);
-                        goto retry_c;
-                    }
-                    break;
-
-                case 'e':
-                case 'E':
-                    if (c == '\'')
-                    {
-                        ctx->type = lex_type_string;
-                        ctx->subtype = lex_subtype_escape_string;
-                        set_plpos (ctx);
-                        push_c_to_buf (L, ctx, stash);
-                        push_c_to_buf (L, ctx, c);
-                    }
-                    else
-                    {
-                        ctx->type = lex_type_ident;
-                        ctx->subtype = lex_subtype_simple_ident;
-                        set_plpos (ctx);
-                        push_c_to_buf (L, ctx, stash);
-                        goto retry_c;
-                    }
-                    break;
-
-                case 'u':
-                case 'U':
-                    if (c == '&')
-                    {
-                        luaL_error (L,
-                                "pos(%I) line(%I) col(%I): "
-                                "lexeme type started with \"u&\" "
-                                "is not supported yet",
-                                ctx->pos, ctx->line, ctx->col);
-                        __builtin_unreachable ();
-                    }
-                    else
-                    {
-                        ctx->type = lex_type_ident;
-                        ctx->subtype = lex_subtype_simple_ident;
-                        set_plpos (ctx);
-                        push_c_to_buf (L, ctx, stash);
-                        goto retry_c;
-                    }
-                    break;
-
-                default:
-                    luaL_error (L,
-                            "pos(%I) line(%I) col(%I): "
-                            "unknown lexeme type started with characters: "
-                            "%d %d %c %c",
-                            ctx->pos, ctx->line, ctx->col,
-                            stash, c, stash, c);
-                    __builtin_unreachable ();
-            }
-        }
-
-        inline void
-        simple_ident ()
-        {
-            switch (c)
-            {
-                case 'a' ... 'z':
-                case 'A' ... 'Z':
-                case '_':
-                case '0' ... '9':
-                    push_c_to_buf (L, ctx, c);
-                    break;
-
-                default:
-                    finish_lexeme ();
-                    goto retry_c;
-            }
-        }
-
-        inline void
-        quoted_ident_wo_stash ()
-        {
-            switch (c)
-            {
-                case '"':
-                    ctx->stash = c;
-                    break;
-
-                case 0:
-                    luaL_error (L,
-                            "pos(%I) line(%I) col(%I): "
-                            "unterminated lexeme: quoted_ident",
-                            ctx->pos, ctx->line, ctx->col);
-                    __builtin_unreachable ();
-
-                default:
-                    push_c_to_buf (L, ctx, c);
-            }
-        }
-
-        inline void
-        quoted_ident_with_stash ()
-        {
-            if (stash != '"') {
-                fprintf (stderr, "unexpected program flow\n");
-                abort ();
-            }
-
-            if (c == '"')
-            {
-                push_str_to_buf (L, ctx, "\"\"", 2);
-            }
-            else
-            {
-                push_c_to_buf (L, ctx, stash);
-                finish_lexeme ();
-                goto retry_c;
-            }
-        }
-
-        inline void
-        number_wo_stash ()
-        {
-            switch (c)
-            {
-                case '-':
-                case '+':
-                    if (ctx->len &&
-                            ctx->len != ctx->state.number.e_len)
-                    {
-                        finish_lexeme_with_state ();
-                        goto retry_c;
-                    }
-                    else
-                    {
-                        ctx->stash = c;
-                        break;
-                    }
-
-                case '0' ... '9':
-                    push_c_to_buf (L, ctx, c);
-                    break;
-
-                case 'e':
-                case 'E':
-                    if (ctx->state.number.has_e)
-                    {
-                        finish_lexeme_with_state ();
-                        goto retry_c;
-                    }
-                    else
-                    {
-                        ctx->stash = c;
-                        break;
-                    }
-
-                case '.':
-                    if (ctx->state.number.has_dot)
-                    {
-                        finish_lexeme_with_state ();
-                        goto retry_c;
-                    }
-                    else
-                    {
-                        ctx->stash = c;
-                        break;
-                    }
-
-                default:
-                    finish_lexeme_with_state ();
-                    goto retry_c;
-            }
-        }
-
-        inline void
-        number_with_stash ()
-        {
-            switch (stash)
-            {
-                case '-':
-                case '+':
-                    switch (c)
-                    {
-                        case '.':
-                            if (ctx->state.number.has_e)
-                            {
-                                finish_lexeme_with_state ();
-                                goto retry_stash;
-                            }
-                            __attribute__ ((fallthrough));
-                        case '0' ... '9':
-                            push_c_to_buf (L, ctx, stash);
-                            push_c_to_buf (L, ctx, c);
-                            break;
-
-                        default:
-                            finish_lexeme_with_state ();
-                            goto retry_stash;
-                    }
-                    break;
-
-                case '.':
-                    if (c == '.')
-                    {
-                        finish_lexeme_with_state ();
-                        goto retry_stash;
-                    }
-                    else
-                    {
-                        push_c_to_buf (L, ctx, stash);
-                        ctx->state.number.has_dot = 1;
-                        goto retry_c;
-                    }
-
-                case 'e':
-                case 'E':
-                    switch (c)
-                    {
-                        case '-':
-                        case '+':
-                        case '0' ... '9':
-                            push_c_to_buf (L, ctx, stash);
-                            ctx->state.number.has_e = 1;
-                            ctx->state.number.e_len = ctx->len;
-                            ctx->state.number.has_dot = 1;
-
-                            if (c == '-' || c == '+')
-                            {
-                                goto retry_c;
-                            }
-                            else
-                            {
-                                push_c_to_buf (L, ctx, c);
-                                break;
-                            }
-
-                        default:
-                            finish_lexeme_with_state ();
-                            goto retry_stash;
-                    }
-                    break;
-
-                default:
-                    fprintf (stderr, "unexpected program flow\n");
-                    abort ();
-            }
-        }
-
-        inline void
-        sing_line_comment ()
-        {
-            switch (c)
-            {
-                case '\n':
-                case 0:
-                    finish_lexeme ();
-                    goto retry_c;
-
-                default:
-                    push_c_to_buf (L, ctx, c);
-            }
-        }
-
-        inline void
-        mult_line_comment_wo_stash ()
-        {
-            switch (c)
-            {
-                case '*':
-                    ctx->stash = c;
-                    break;
-
-                case 0:
-                    luaL_error (L,
-                            "pos(%I) line(%I) col(%I): "
-                            "unterminated lexeme: mult_line_comment",
-                            ctx->pos, ctx->line, ctx->col);
-                    __builtin_unreachable ();
-
-                default:
-                    push_c_to_buf (L, ctx, c);
-            }
-        }
-
-        inline void
-        mult_line_comment_with_stash ()
-        {
-            if (stash != '*') {
-                fprintf (stderr, "unexpected program flow\n");
-                abort ();
-            }
-
-            if (c == '/')
-            {
-                push_str_to_buf (L, ctx, "*/", 2);
-                finish_lexeme ();
-            }
-            else
-            {
-                push_c_to_buf (L, ctx, stash);
-                goto retry_c;
-            }
-        }
 
 retry_stash:
         switch (ctx->subtype)
