@@ -164,7 +164,7 @@ push_str_to_buf (lua_State *L,
 static void
 push_sing_line_comment_translated (lua_State *L, long len, const char *buf)
 {
-    if (len <= 2 || buf[0] != '-' || buf[1] != '-')
+    if (len < 2 || buf[0] != '-' || buf[1] != '-')
     {
         lua_pushnil (L);
         return;
@@ -176,7 +176,7 @@ push_sing_line_comment_translated (lua_State *L, long len, const char *buf)
 static void
 push_mult_line_comment_translated (lua_State *L, long len, const char *buf)
 {
-    if (len <= 4 || buf[0] != '/' || buf[1] != '*' ||
+    if (len < 4 || buf[0] != '/' || buf[1] != '*' ||
             buf[len - 2] != '*' || buf[len - 1] != '/')
     {
         lua_pushnil (L);
@@ -248,11 +248,13 @@ lex_feed (lua_State *L)
                         // TODO ... ... ...
 
                         case lex_subtype_sing_line_comment:
-                            push_sing_line_comment_translated (L, ctx->len, ctx->buf);
+                            push_sing_line_comment_translated (
+                                    L, ctx->len, ctx->buf);
                             break;
 
                         case lex_subtype_mult_line_comment:
-                            push_mult_line_comment_translated (L, ctx->len, ctx->buf);
+                            push_mult_line_comment_translated (
+                                    L, ctx->len, ctx->buf);
                             break;
 
                         default:
@@ -293,7 +295,6 @@ lex_feed (lua_State *L)
         __label__ retry_c;
         char stash;
         char c = input[input_i];
-        __builtin_prefetch (input + input_i + 1);
 
         if (__builtin_expect (c, 1))
         {
@@ -644,10 +645,8 @@ retry_c:
 
             default:
                 fprintf (stderr,
-                        "pos(%li) line(%li) col(%li): "
                         "unexpected program flow: switch (ctx->subtype): "
-                        "%d\n",
-                        ctx->pos, ctx->line, ctx->col, ctx->subtype);
+                        "%d\n", ctx->subtype);
                 abort ();
         }
     }
