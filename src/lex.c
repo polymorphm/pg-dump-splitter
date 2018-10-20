@@ -62,7 +62,8 @@ struct lex_ctx
         struct lex_ctx_state_number
         {
             int has_e; // has e
-            int has_dot; // has dot. before e if has no e. after e if has e
+            int e_len; // length of the first part's number
+            int has_dot; // has dot
         } number;
         struct lex_ctx_state_dollar_string
         {
@@ -303,7 +304,8 @@ lex_feed (lua_State *L)
                             push_quoted_lexeme_translated (L, ctx->len, ctx->buf, '\'');
                             break;
 
-                        // unimplemented yet: ``case lex_subtype_escape_string: ...``
+                        // XXX  unimplemented yet:
+                        //          ``case lex_subtype_escape_string: ...``
 
                         //case lex_subtype_dollar_string:
                         //    // TODO ... ...
@@ -468,13 +470,12 @@ retry_c:
                 case '^':
                 case '&':
                 case '*':
-                case '+':
                 case '=':
                 case '|':
                 case '<':
                 case '>':
                 case '?':
-                    // no cases '-' '/' here, cause of them stash behaviour
+                    // no cases '-' '+' '/' here, cause of them stash behaviour
 
                     ctx->type = lex_type_symbols;
                     ctx->subtype = lex_subtype_random_symbols;
@@ -483,6 +484,7 @@ retry_c:
                     break;
 
                 case '-':
+                case '+':
                 case '/':
                 case '.':
                 case 'e':
@@ -535,6 +537,7 @@ retry_c:
             switch (stash)
             {
                 case '-':
+                case '+':
                 case '/':
                 case '.':
                     if (stash == '-' && c == '-')
@@ -554,6 +557,8 @@ retry_c:
                     else if ((stash == '-' || stash == '.') &&
                             c >= '0' && c <= '9')
                     {
+                        // XXX  we don't support numbers like ``-.123`` yet
+
                         ctx->type = lex_type_number;
                         ctx->subtype = lex_subtype_number;
                         set_plpos (ctx);
@@ -695,12 +700,19 @@ retry_c:
             switch (c)
             {
                 case '-':
-                    if (ctx->len)
+                case '+':
+                    if (ctx->len &&
+                            ctx->len != ctx->state.number.e_len)
                     {
                         finish_lexeme_with_state ();
                         goto retry_c;
                     }
-                    __attribute__ ((fallthrough));
+                    else
+                    {
+                        ctx->stash = c;
+                        break;
+                    }
+
                 case '0' ... '9':
                     push_c_to_buf (L, ctx, c);
                     break;
@@ -739,51 +751,74 @@ retry_c:
         inline void
         number_with_stash ()
         {
-            if (stash == '.')
+            switch (stash)
             {
-                if (c == '.')
-                {
-                    finish_lexeme_with_state ();
-                    goto retry_stash;
-                }
-                else
-                {
-                    push_c_to_buf (L, ctx, stash);
-                    ctx->state.number.has_dot = 1;
-                    goto retry_c;
-                }
-            }
-            else
-            {
-                if (stash != 'e' && stash != 'E')
-                {
-                    fprintf (stderr, "unexpected program flow\n");
-                    abort ();
-                }
-
-                switch (c)
-                {
-                    case '-':
-                    case '+':
-                    case '0' ... '9':
-                    case '.':
-                        push_c_to_buf (L, ctx, stash);
-                        ctx->state.number.has_e = 1;
-                        ctx->state.number.has_dot = 0;
-                        if (c == '.')
-                        {
-                            goto retry_c;
-                        }
-                        else
-                        {
+                case '-':
+                case '+':
+                    switch (c)
+                    {
+                        case '.':
+                            if (ctx->state.number.has_e)
+                            {
+                                finish_lexeme_with_state ();
+                                goto retry_stash;
+                            }
+                            __attribute__ ((fallthrough));
+                        case '0' ... '9':
+                            push_c_to_buf (L, ctx, stash);
                             push_c_to_buf (L, ctx, c);
                             break;
-                        }
 
-                    default:
+                        default:
+                            finish_lexeme_with_state ();
+                            goto retry_stash;
+                    }
+                    break;
+
+                case '.':
+                    if (c == '.')
+                    {
                         finish_lexeme_with_state ();
                         goto retry_stash;
-                }
+                    }
+                    else
+                    {
+                        push_c_to_buf (L, ctx, stash);
+                        ctx->state.number.has_dot = 1;
+                        goto retry_c;
+                    }
+
+                case 'e':
+                case 'E':
+                    switch (c)
+                    {
+                        case '-':
+                        case '+':
+                        case '0' ... '9':
+                            push_c_to_buf (L, ctx, stash);
+                            ctx->state.number.has_e = 1;
+                            ctx->state.number.e_len = ctx->len;
+                            ctx->state.number.has_dot = 1;
+
+                            if (c == '-' || c == '+')
+                            {
+                                goto retry_c;
+                            }
+                            else
+                            {
+                                push_c_to_buf (L, ctx, c);
+                                break;
+                            }
+
+                        default:
+                            finish_lexeme_with_state ();
+                            goto retry_stash;
+                    }
+                    break;
+
+                default:
+                    fprintf (stderr, "unexpected program flow\n");
+                    abort ();
             }
         }
 
