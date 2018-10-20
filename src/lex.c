@@ -57,7 +57,19 @@ struct lex_ctx
     long len;       // current lexeme length
     char *buf;      // pointer to lexeme buffer, not zero terminated
     char stash;     // stashed char, to return to it next iteration
-    // TODO     ... union for each specific type
+    union lex_ctx_state
+    {
+        struct lex_ctx_state_number
+        {
+            int has_e; // has e
+            int has_dot; // has dot. before e if has no e. after e if has e
+        } number;
+        struct lex_ctx_state_dollar_string
+        {
+            long second_dollar; // the second dollar's position
+            long last_dollar; // the last dollar's position
+        } dollar_string;
+    } state;       // type's specific state
 };
 
 static inline void
@@ -327,8 +339,14 @@ lex_feed (lua_State *L)
 
         ctx->type = lex_type_undefined;
         ctx->subtype = lex_subtype_undefined;
-        set_lpos (ctx);
         ctx->len = 0;
+    }
+
+    void
+    finish_lexeme_with_state ()
+    {
+        finish_lexeme ();
+        ctx->state = (union lex_ctx_state) {};
     }
 
     if (__builtin_expect (!input_len, 0))
@@ -343,6 +361,7 @@ lex_feed (lua_State *L)
     for (size_t input_i = 0; input_i < input_len; ++input_i)
     {
         __label__ retry_c;
+        __label__ retry_stash;
         char stash;
         char c = input[input_i];
 
@@ -653,7 +672,12 @@ retry_c:
         inline void
         quoted_ident_with_stash ()
         {
-            if (stash == '"' && c == '"')
+            if (stash != '"') {
+                fprintf (stderr, "unexpected program flow\n");
+                abort ();
+            }
+
+            if (c == '"')
             {
                 push_str_to_buf (L, ctx, "\"\"", 2);
             }
@@ -665,7 +689,103 @@ retry_c:
             }
         }
 
+        inline void
+        number_wo_stash ()
+        {
+            switch (c)
+            {
+                case '-':
+                    if (ctx->len)
+                    {
+                        finish_lexeme_with_state ();
+                        goto retry_c;
+                    }
+                    __attribute__ ((fallthrough));
+                case '0' ... '9':
+                    push_c_to_buf (L, ctx, c);
+                    break;
 
+                case 'e':
+                case 'E':
+                    if (ctx->state.number.has_e)
+                    {
+                        finish_lexeme_with_state ();
+                        goto retry_c;
+                    }
+                    else
+                    {
+                        ctx->stash = c;
+                        break;
+                    }
+
+                case '.':
+                    if (ctx->state.number.has_dot)
+                    {
+                        finish_lexeme_with_state ();
+                        goto retry_c;
+                    }
+                    else
+                    {
+                        ctx->stash = c;
+                        break;
+                    }
+
+                default:
+                    finish_lexeme_with_state ();
+                    goto retry_c;
+            }
+        }
+
+        inline void
+        number_with_stash ()
+        {
+            if (stash == '.')
+            {
+                if (c == '.')
+                {
+                    finish_lexeme_with_state ();
+                    goto retry_stash;
+                }
+                else
+                {
+                    push_c_to_buf (L, ctx, stash);
+                    ctx->state.number.has_dot = 1;
+                    goto retry_c;
+                }
+            }
+            else
+            {
+                if (stash != 'e' && stash != 'E')
+                {
+                    fprintf (stderr, "unexpected program flow\n");
+                    abort ();
+                }
+
+                switch (c)
+                {
+                    case '-':
+                    case '+':
+                    case '0' ... '9':
+                    case '.':
+                        push_c_to_buf (L, ctx, stash);
+                        ctx->state.number.has_e = 1;
+                        ctx->state.number.has_dot = 0;
+                        if (c == '.')
+                        {
+                            goto retry_c;
+                        }
+                        else
+                        {
+                            push_c_to_buf (L, ctx, c);
+                            break;
+                        }
+
+                    default:
+                        finish_lexeme_with_state ();
+                        goto retry_stash;
+                }
+            }
+        }
 
         inline void
         sing_line_comment ()
@@ -706,7 +826,12 @@ retry_c:
         inline void
         mult_line_comment_with_stash ()
         {
-            if (stash == '*' && c == '/')
+            if (stash != '*') {
+                fprintf (stderr, "unexpected program flow\n");
+                abort ();
+            }
+
+            if (c == '/')
             {
                 push_str_to_buf (L, ctx, "*/", 2);
                 finish_lexeme ();
@@ -718,6 +843,7 @@ retry_c:
             }
         }
 
+retry_stash:
         switch (ctx->subtype)
         {
             case lex_subtype_undefined:
@@ -746,8 +872,16 @@ retry_c:
                 }
                 break;
 
-            //case lex_subtype_number:
-
+            case lex_subtype_number:
+                if (stash)
+                {
+                    number_with_stash ();
+                }
+                else
+                {
+                    number_wo_stash ();
+                }
+                break;
 
                 // TODO ... ...
 
