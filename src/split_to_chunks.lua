@@ -18,7 +18,7 @@ function export.lex_ctx_iter_item(iter_ctx)
     if #iter_ctx.items > 0 then
       return std.table.unpack(std.table.remove(iter_ctx.items))
     end
-    
+
     if iter_ctx.final then return end
 
     local buf = iter_ctx.dump_fd:read(iter_ctx.options.read_size)
@@ -57,7 +57,15 @@ function export.split_to_chunks(lex_ctx, dump_fd, dump_path, output_dir,
     hooks_ctx, options)
   for lex_type, lex_subtype, location, value, translated_value
       in export.lex_ctx_iter(lex_ctx, dump_fd, options) do
-    std.print('+++', lex_type, lex_subtype--[[, location, value--]], translated_value, '---') -- DEBUG ONLY
+    if hooks_ctx.lexeme_handler then
+      lex_type, lex_subtype, location, value, translated_value =
+          hooks_ctx:lexeme_handler(
+              lex_type, lex_subtype, location, value, translated_value)
+
+      std.assert(lex_type, 'no lex_type')
+    end
+
+    -- TODO   ... ... ...
   end
 end
 
