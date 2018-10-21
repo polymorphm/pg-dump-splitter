@@ -1,7 +1,7 @@
 // abort, realloc, free
 #include <stdlib.h>
 
-// memcpy
+// memcpy, memcmp
 #include <string.h>
 
 // fprintf, stderr
@@ -66,8 +66,7 @@ struct lex_ctx
         } number;
         struct lex_ctx_state_dollar_string
         {
-            long second_dollar; // the second dollar's position
-            long last_dollar; // the last dollar's position
+            long marker_len; // start/stop marker's length
         } dollar_string;
     } state;       // type's specific state
 };
@@ -209,6 +208,20 @@ push_quoted_lexeme_translated (lua_State *L,
 }
 
 static void
+push_dollar_string_translated (lua_State *L, long len, long marker_len,
+        const char *buf)
+{
+    if (!marker_len || len < marker_len * 2 ||
+            memcmp (buf + len - marker_len, buf, marker_len))
+    {
+        lua_pushnil (L);
+        return;
+    }
+
+    lua_pushlstring (L, buf + marker_len, len - marker_len * 2);
+}
+
+static void
 push_sing_line_comment_translated (lua_State *L, long len, const char *buf)
 {
     if (len < 2 || buf[0] != '-' || buf[1] != '-')
@@ -311,9 +324,11 @@ lex_feed (lua_State *L)
                         // XXX  unimplemented yet:
                         //          ``case lex_subtype_escape_string: ...``
 
-                        //case lex_subtype_dollar_string:
-                        //    // TODO ... ...
-                        //    break;
+                        case lex_subtype_dollar_string:
+                            push_dollar_string_translated (L, ctx->len,
+                                    ctx->state.dollar_string.marker_len,
+                                    ctx->buf);
+                            break;
 
                         case lex_subtype_sing_line_comment:
                             push_sing_line_comment_translated (
@@ -861,9 +876,45 @@ lex_feed (lua_State *L)
         }
     }
 
+    inline void
+    dollar_string ()
+    {
+        if (__builtin_expect (c == 0, 0))
+        {
+            luaL_error (L,
+                    "pos(%I) line(%I) col(%I): "
+                    "unterminated lexeme: dollar_string ",
+                    ctx->pos, ctx->line, ctx->col);
+            __builtin_unreachable ();
+        }
 
-    // TODO ... dollar string ...
+        push_c_to_buf (L, ctx, c);
 
+        if (c != '$')
+        {
+            return;
+        }
+
+        long len = ctx->len;
+        long marker_len = ctx->state.dollar_string.marker_len;
+        const char *buf = ctx->buf;
+
+        if (!marker_len)
+        {
+            if (__builtin_expect (len < 2, 0))
+            {
+                fprintf (stderr, "unexpected program flow\n");
+                abort ();
+            }
+
+            ctx->state.dollar_string.marker_len = len;
+        }
+        else if (len >= marker_len * 2 &&
+                !memcmp (buf + len - marker_len, buf, marker_len))
+        {
+            finish_lexeme_with_state ();
+        }
+    }
 
     inline void
     special_symbols ()
@@ -1083,7 +1134,9 @@ retry_stash:
                 }
                 break;
 
-                // TODO ... dollar string ...
+            case lex_subtype_dollar_string:
+                dollar_string ();
+                break;
 
             case lex_subtype_special_symbols:
                 special_symbols ();
