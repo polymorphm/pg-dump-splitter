@@ -70,12 +70,12 @@ function export.make_pattern_rules(options)
       {
         'fork',
         {
-          {'ident', 'create_function_obj_schema'},
+          {'ident', 'obj_schema'},
           {'ss', '.'},
-          {'ident', 'create_function_obj_name'},
+          {'ident', 'obj_name'},
         },
         {
-          {'ident', 'create_function_obj_name_wo_schema'},
+          {'ident', 'obj_name_wo_schema'},
         },
       },
       {'ss', '('},
@@ -92,12 +92,12 @@ function export.make_pattern_rules(options)
       {
         'fork',
         {
-          {'ident', 'function_owner_obj_schema'},
+          {'ident', 'obj_schema'},
           {'ss', '.'},
-          {'ident', 'function_owner_obj_name'},
+          {'ident', 'obj_name'},
         },
         {
-          {'ident', 'function_owner_obj_name_wo_schema'},
+          {'ident', 'obj_name_wo_schema'},
         },
       },
       {'ss', '('},
@@ -122,7 +122,7 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
     next_queue_pts = {}
 
     for pt_i, pt in std.ipairs(queue_pts) do
-      local cand_obj_type = pt[1]
+      local obj_type = pt[1]
       local rule = pt[2]
 
       if not rule then
@@ -131,6 +131,24 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
 
       local pt_type = rule[1]
       local pt_arg = rule[2]
+      local value_ver = pt_ctx.value_versions[pt]
+
+      local function write_value_ver(key, value)
+        if not value_ver then value_ver = {} end
+
+        value_ver[pt_arg] = value
+      end
+
+      local function dup_value_ver(to_pt)
+        if not value_ver then return end
+
+        local next_value_ver = {}
+        pt_ctx.value_versions[to_pt] = next_value_ver
+
+        for k, v in std.pairs(value_ver) do
+          next_value_ver[k] = v
+        end
+      end
 
       if pt_type == 'kw' then
         if level ~= 0 or
@@ -139,10 +157,12 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
           goto continue
         end
 
-        std.table.insert(next_pts, {
-          cand_obj_type,
+        local next_pt = {
+          obj_type,
           std.select(3, std.table.unpack(pt)),
-        })
+        }
+        std.table.insert(next_pts, next_pt)
+        dup_value_ver(next_pt)
       elseif pt_type == 'ss' then
         if level ~= 0 or
             lex_subtype ~= options.lex_consts.subtype_special_symbols or
@@ -150,22 +170,26 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
           goto continue
         end
 
-        std.table.insert(next_pts, {
-          cand_obj_type,
+        local next_pt = {
+          obj_type,
           std.select(3, std.table.unpack(pt)),
-        })
+        }
+        std.table.insert(next_pts, next_pt)
+        dup_value_ver(next_pt)
       elseif pt_type == 'ident' then
         if level ~= 0 or
             lex_type ~= options.lex_consts.type_ident then
           goto continue
         end
 
-        pt_ctx[pt_arg] = translated_value
+        write_value_ver(pt_arg, translated_value)
 
-        std.table.insert(next_pts, {
-          cand_obj_type,
+        local next_pt = {
+          obj_type,
           std.select(3, std.table.unpack(pt)),
-        })
+        }
+        std.table.insert(next_pts, next_pt)
+        dup_value_ver(next_pt)
       elseif pt_type == 'end' then
         if level ~= 0 or
             lex_subtype ~= options.lex_consts.subtype_special_symbols or
@@ -173,35 +197,44 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
           goto continue
         end
 
-        if pt_ctx.cand_obj_type and
-            pt_ctx.cand_obj_type ~= cand_obj_type then
+        if pt_ctx.obj_type and
+            pt_ctx.obj_type ~= obj_type then
           std.error('pos(' .. pt_ctx.location.lpos ..
               ') line(' .. pt_ctx.location.lline ..
               ') col(' .. pt_ctx.location.lcol ..
-              '): ambiguous obj_type: ' .. pt_ctx.cand_obj_type ..
-              ' or ' .. cand_obj_type)
-        else
-          pt_ctx.cand_obj_type = cand_obj_type
+              '): ambiguous obj_type: ' .. pt_ctx.obj_type ..
+              ' or ' .. obj_type)
+        elseif not pt_ctx.obj_type then
+          pt_ctx.obj_type = obj_type
+
+          if value_ver then
+            for k, v in std.pairs(value_ver) do
+              pt_ctx[k] = v
+            end
+          end
         end
       elseif pt_type == 'any' then
         std.table.insert(next_pts, pt)
+        dup_value_ver(pt)
 
-        std.table.insert(next_queue_pts, {
-          cand_obj_type,
+        local next_pt = {
+          obj_type,
           std.select(3, std.table.unpack(pt)),
-        })
+        }
+        std.table.insert(next_queue_pts, next_pt)
+        dup_value_ver(next_pt)
       elseif pt_type == 'fork' then
         for fork_rules_i = 2, #rule do
           local fork_rules = rule[fork_rules_i]
 
           if #fork_rules == 0 then
             std.table.insert(next_queue_pts, {
-              cand_obj_type,
+              obj_type,
               std.select(3, std.table.unpack(pt)),
             })
           else
             local next_pt = {
-              cand_obj_type,
+              obj_type,
               std.table.unpack(fork_rules),
             }
             for i = 3, #pt do
@@ -209,6 +242,7 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
             end
 
             std.table.insert(next_queue_pts, next_pt)
+            dup_value_ver(next_pt)
           end
         end
       else
@@ -269,6 +303,7 @@ function export.split_to_chunks(lex_ctx, dump_fd, dump_path, output_dir,
         pt_ctx = {
           pts = pattern_rules,
           location = location,
+          value_versions = std.setmetatable({}, {__mode = 'k'}),
         }
       end
 
@@ -281,7 +316,7 @@ function export.split_to_chunks(lex_ctx, dump_fd, dump_path, output_dir,
             pt_ctx.location.lpos, end_pos)
         local skip = false
 
-        if pt_ctx.cand_obj_type then
+        if pt_ctx.obj_type then
 
           if hooks_ctx.processed_pt_handler then
             skip = hooks_ctx:processed_pt_handler(pt_ctx, skip, dump_data)
