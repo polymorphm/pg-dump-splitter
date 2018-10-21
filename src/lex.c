@@ -61,8 +61,7 @@ struct lex_ctx
     {
         struct lex_ctx_state_number
         {
-            int has_e; // has e
-            int e_len; // length of the first part's number
+            long e_len; // length of the first part's number
             int has_dot; // has dot
         } number;
         struct lex_ctx_state_dollar_string
@@ -686,7 +685,7 @@ lex_feed (lua_State *L)
 
             case 'e':
             case 'E':
-                if (ctx->state.number.has_e)
+                if (ctx->state.number.e_len)
                 {
                     finish_lexeme_with_state ();
                     goto retry_c;
@@ -725,7 +724,7 @@ lex_feed (lua_State *L)
                 switch (c)
                 {
                     case '.':
-                        if (ctx->state.number.has_e)
+                        if (ctx->state.number.e_len)
                         {
                             finish_lexeme_with_state ();
                             goto retry_stash;
@@ -763,7 +762,6 @@ lex_feed (lua_State *L)
                     case '+':
                     case '0' ... '9':
                         push_c_to_buf (L, ctx, stash);
-                        ctx->state.number.has_e = 1;
                         ctx->state.number.e_len = ctx->len;
                         ctx->state.number.has_dot = 1;
 
