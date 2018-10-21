@@ -2,6 +2,9 @@ int
 luaopen_pg_dump_splitter (lua_State *L);
 
 int
+luaopen_split_to_chunks (lua_State *L);
+
+int
 luaopen_os_ext (lua_State *L);
 
 int

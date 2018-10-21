@@ -2,30 +2,30 @@ local std, _ENV = _ENV
 
 local lex = std.require 'lex'
 local os_ext = std.require 'os_ext'
+local split_to_chunks = std.require 'split_to_chunks'
 
---local function split_to_chunks(
---    lex_ctx, dump_fd, dump_path, output_dir, options, hooks_ctx, options)
---    TODO    detach to separete library file
---end
+local export = {}
 
-local function init_default_options(options)
-  options.lex_max_size = 16 * 1024 * 1024
-  options.lex_consts = lex.consts
-  options.make_lex_ctx = lex.make_ctx
-  options.open = std.io.open
-  options.mkdir = os_ext.mkdir
-  options.rename = std.os.rename
-  --options.split_to_chunks = XXXXXXX.split_to_chunks
-  --options.sort_chunks = XXXXXXX.sort_chunks
+function export.make_default_options(options)
+  return {
+    lex_max_size = 16 * 1024 * 1024,
+    read_size = 128 * 1024,
+    lex_consts = lex.consts,
+    lex_trans_more = false,
+    make_lex_ctx = lex.make_ctx,
+    open = std.io.open,
+    mkdir = os_ext.mkdir,
+    --readdir = os_ext.readdir,
+    rename = std.os.rename,
+    make_split_to_chunks_options =
+        split_to_chunks.make_options_from_pg_dump_splitter,
+    split_to_chunks = split_to_chunks.split_to_chunks,
+    --make_sort_chunks_options = XXXXXXX.make_options_from_pg_dump_splitter,
+    --sort_chunks = XXXXXXX.sort_chunks,
+ }
 end
 
-local function make_default_options()
-  local options = {}
-  init_default_options(options)
-  return options
-end
-
-local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
+function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
   local hooks_ctx = {}
 
   if hooks_path then
@@ -67,8 +67,8 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
           lex_ctx, dump_fd, dump_path, tmp_output_dir)
     end
 
-    --options.split_to_chunks(
-    --    lex_ctx, dump_fd, dump_path, tmp_output_dir, hooks_ctx, options)
+    options.split_to_chunks(lex_ctx, dump_fd, dump_path, tmp_output_dir,
+        hooks_ctx, options:make_split_to_chunks_options())
 
     if hooks_ctx.end_split_to_chunks_handler then
       hooks_ctx:end_split_to_chunks_handler()
@@ -77,7 +77,8 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       hooks_ctx:begin_sort_chunks_handler(tmp_output_dir)
     end
 
-    --options.sort_chunks(tmp_output_dir, hooks_ctx, options)
+    --options.sort_chunks(tmp_output_dir, hooks_ctx,
+    --    options:make_sort_chunks_options())
 
     if hooks_ctx.end_sort_chunks_handler then
       hooks_ctx:end_sort_chunks_handler()
@@ -99,10 +100,6 @@ local function pg_dump_splitter(dump_path, output_dir, hooks_path, options)
   std.assert(ok, err)
 end
 
-return {
-  init_default_options = init_default_options,
-  make_default_options = make_default_options,
-  pg_dump_splitter = pg_dump_splitter,
-}
+return export
 
 -- vi:ts=2:sw=2:et
