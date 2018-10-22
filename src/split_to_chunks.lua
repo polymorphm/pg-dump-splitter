@@ -54,74 +54,183 @@ function export.lex_ctx_iter(lex_ctx, dump_fd, options)
 end
 
 function export.make_pattern_rules(options)
+  local kw = export.kw_rule_handler
+  local ss = export.ss_rule_handler
+  local ident = export.ident_rule_handler
+  local en = export.en_rule_handler
+  local any =  export.any_rule_handler
+  local fork = export.fork_rule_handler
+
   return {
     {
       'create_function',
-      {'kw', 'create'},
+      {kw, 'create'},
       {
-        'fork',
+        fork,
         {
-          {'kw', 'or'},
-          {'kw', 'replace'},
+          {kw, 'or'},
+          {kw, 'replace'},
         },
         {},
       },
-      {'kw', 'function'},
+      {kw, 'function'},
       {
-        'fork',
+        fork,
         {
-          {'ident', 'obj_schema'},
-          {'ss', '.'},
-          {'ident', 'obj_name'},
+        {ident, 'obj_schema'},
+        {ss, '.'},
+        {ident, 'obj_name'},
         },
         {
-          {'ident', 'obj_name_wo_schema'},
+          {ident, 'obj_name_wo_schema'},
         },
       },
-      {'ss', '('},
-      {'any'},
-      {'ss', ')'},
-      {'any'},
-      {'end'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
     },
 
     {
       'function_owner',
-      {'kw', 'alter'},
-      {'kw', 'function'},
+      {kw, 'alter'},
+      {kw, 'function'},
       {
-        'fork',
+        fork,
         {
-          {'ident', 'obj_schema'},
-          {'ss', '.'},
-          {'ident', 'obj_name'},
+          {ident, 'obj_schema'},
+          {ss, '.'},
+          {ident, 'obj_name'},
         },
         {
-          {'ident', 'obj_name_wo_schema'},
+          {ident, 'obj_name_wo_schema'},
         },
       },
-      {'ss', '('},
-      {'any'},
-      {'ss', ')'},
-      {'any'},
-      {'end'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
     },
 
     -- TODO ... ... ...
   }
 end
 
+export.rule_ctx_proto = {}
+
+function export.rule_ctx_proto:put_value(key, value)
+  if not self.value_version then self.value_version = {} end
+
+  self.value_version[key] = value
+end
+
+function export.rule_ctx_proto:dup_value_version(to_pt)
+  if not self.value_version then return end
+
+  local next_val_ver = {}
+  self.pt_ctx.value_versions[to_pt] = next_val_ver
+
+  for k, v in std.pairs(self.value_version) do
+    next_val_ver[k] = v
+  end
+end
+
+function export.rule_ctx_proto:push_pt(next_pt)
+  std.table.insert(self.next_pts, next_pt)
+  self:dup_value_version(next_pt)
+end
+
+function export.rule_ctx_proto:push_pt_soon(next_pt)
+  std.table.insert(self.next_pts_soon, next_pt)
+  self:dup_value_version(next_pt)
+end
+
+function export.rule_ctx_proto:make_shifted_pt()
+  return std.table.move(self.pt, 3, #self.pt, 2, {self.obj_type})
+end
+
+function export.rule_ctx_proto:push_shifted_pt()
+  local next_pt = self:make_shifted_pt()
+  self:push_pt(next_pt)
+end
+
+function export.kw_rule_handler(rule_ctx, lexeme, options)
+  if lexeme.level == 0 and
+      lexeme.lex_type == options.lex_consts.type_ident and
+      lexeme.translated_value == rule_ctx.rule[2] then
+    rule_ctx:push_shifted_pt()
+  end
+end
+
+function export.ss_rule_handler(rule_ctx, lexeme, options)
+  if lexeme.level == 0 and
+      lexeme.lex_subtype == options.lex_consts.subtype_special_symbols and
+      lexeme.value == rule_ctx.rule[2] then
+    rule_ctx:push_shifted_pt()
+  end
+end
+
+function export.ident_rule_handler(rule_ctx, lexeme, options)
+  if lexeme.level == 0 and
+      lexeme.lex_type == options.lex_consts.type_ident then
+    rule_ctx:put_value(rule_ctx.rule[2], lexeme.translated_value)
+    rule_ctx:push_shifted_pt()
+  end
+end
+
+function export.en_rule_handler(rule_ctx, lexeme, options)
+  if lexeme.level == 0 and
+      lexeme.lex_subtype == options.lex_consts.subtype_special_symbols and
+      lexeme.value == ';' then
+    if rule_ctx.pt_ctx.obj_type and
+        rule_ctx.pt_ctx.obj_type ~= rule_ctx.obj_type then
+      std.error('pos(' .. rule_ctx.pt_ctx.location.lpos ..
+          ') line(' .. rule_ctx.pt_ctx.location.lline ..
+          ') col(' .. rule_ctx.pt_ctx.location.lcol ..
+          '): ambiguous obj_type: ' .. rule_ctx.pt_ctx.obj_type ..
+          ' or ' .. rule_ctx.obj_type)
+    elseif not rule_ctx.pt_ctx.obj_type then
+      rule_ctx.pt_ctx.obj_type = rule_ctx.obj_type
+
+      if rule_ctx.value_version then
+        for k, v in std.pairs(rule_ctx.value_version) do
+          rule_ctx.pt_ctx[k] = v
+        end
+      end
+    end
+  end
+end
+
+function export.any_rule_handler(rule_ctx, lexeme, options)
+  local next_pt = rule_ctx:make_shifted_pt()
+
+  rule_ctx:push_pt_soon(next_pt)
+  rule_ctx:push_pt(rule_ctx.pt)
+end
+
+function export.fork_rule_handler(rule_ctx, lexeme, options)
+  for i = 2, #rule_ctx.rule do
+    local fork_rules = rule_ctx.rule[i]
+    local next_pt = std.table.move(fork_rules, 1, #fork_rules,
+        2, {rule_ctx.obj_type})
+    std.table.move(rule_ctx.pt, 3, #rule_ctx.pt, #next_pt + 1, next_pt)
+
+    rule_ctx:push_pt_soon(next_pt)
+  end
+end
+
 function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
     value, translated_value, level, options)
   local next_pts = {}
-  local queue_pts
-  local next_queue_pts = pt_ctx.pts
+  local next_pts_soon = pt_ctx.pts
 
   repeat
-    queue_pts = next_queue_pts
-    next_queue_pts = {}
+    local pts = next_pts_soon
+    next_pts_soon = {}
 
-    for pt_i, pt in std.ipairs(queue_pts) do
+    for pt_i, pt in std.ipairs(pts) do
       local obj_type = pt[1]
       local rule = pt[2]
 
@@ -129,133 +238,33 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
         goto continue
       end
 
-      local pt_type = rule[1]
-      local pt_arg = rule[2]
-      local value_ver = pt_ctx.value_versions[pt]
+      local rule_handler = rule[1]
+      local rule_ctx = std.setmetatable(
+        {
+          pt_ctx = pt_ctx,
+          next_pts = next_pts,
+          next_pts_soon = next_pts_soon,
+          pt = pt,
+          obj_type = obj_type,
+          rule = rule,
+          value_version = pt_ctx.value_versions[pt],
+        },
+        {__index = export.rule_ctx_proto}
+      )
+      local lexeme = {
+        lex_type = lex_type,
+        lex_subtype = lex_subtype,
+        location = location,
+        value = value,
+        translated_value = translated_value,
+        level = level,
+      }
 
-      local function write_value_ver(key, value)
-        if not value_ver then value_ver = {} end
-
-        value_ver[pt_arg] = value
-      end
-
-      local function dup_value_ver(to_pt)
-        if not value_ver then return end
-
-        local next_value_ver = {}
-        pt_ctx.value_versions[to_pt] = next_value_ver
-
-        for k, v in std.pairs(value_ver) do
-          next_value_ver[k] = v
-        end
-      end
-
-      if pt_type == 'kw' then
-        if level ~= 0 or
-            lex_type ~= options.lex_consts.type_ident or
-            translated_value ~= pt_arg then
-          goto continue
-        end
-
-        local next_pt = {
-          obj_type,
-          std.select(3, std.table.unpack(pt)),
-        }
-        std.table.insert(next_pts, next_pt)
-        dup_value_ver(next_pt)
-      elseif pt_type == 'ss' then
-        if level ~= 0 or
-            lex_subtype ~= options.lex_consts.subtype_special_symbols or
-            value ~= pt_arg then
-          goto continue
-        end
-
-        local next_pt = {
-          obj_type,
-          std.select(3, std.table.unpack(pt)),
-        }
-        std.table.insert(next_pts, next_pt)
-        dup_value_ver(next_pt)
-      elseif pt_type == 'ident' then
-        if level ~= 0 or
-            lex_type ~= options.lex_consts.type_ident then
-          goto continue
-        end
-
-        write_value_ver(pt_arg, translated_value)
-
-        local next_pt = {
-          obj_type,
-          std.select(3, std.table.unpack(pt)),
-        }
-        std.table.insert(next_pts, next_pt)
-        dup_value_ver(next_pt)
-      elseif pt_type == 'end' then
-        if level ~= 0 or
-            lex_subtype ~= options.lex_consts.subtype_special_symbols or
-            value ~= ';' then
-          goto continue
-        end
-
-        if pt_ctx.obj_type and
-            pt_ctx.obj_type ~= obj_type then
-          std.error('pos(' .. pt_ctx.location.lpos ..
-              ') line(' .. pt_ctx.location.lline ..
-              ') col(' .. pt_ctx.location.lcol ..
-              '): ambiguous obj_type: ' .. pt_ctx.obj_type ..
-              ' or ' .. obj_type)
-        elseif not pt_ctx.obj_type then
-          pt_ctx.obj_type = obj_type
-
-          if value_ver then
-            for k, v in std.pairs(value_ver) do
-              pt_ctx[k] = v
-            end
-          end
-        end
-      elseif pt_type == 'any' then
-        std.table.insert(next_pts, pt)
-        dup_value_ver(pt)
-
-        local next_pt = {
-          obj_type,
-          std.select(3, std.table.unpack(pt)),
-        }
-        std.table.insert(next_queue_pts, next_pt)
-        dup_value_ver(next_pt)
-      elseif pt_type == 'fork' then
-        for fork_rules_i = 2, #rule do
-          local fork_rules = rule[fork_rules_i]
-
-          if #fork_rules == 0 then
-            std.table.insert(next_queue_pts, {
-              obj_type,
-              std.select(3, std.table.unpack(pt)),
-            })
-          else
-            local next_pt = {
-              obj_type,
-              std.table.unpack(fork_rules),
-            }
-            for i = 3, #pt do
-              std.table.insert(next_pt, pt[i])
-            end
-
-            std.table.insert(next_queue_pts, next_pt)
-            dup_value_ver(next_pt)
-          end
-        end
-      else
-        if pt_type then
-          std.error('invalid pt_type: ' .. pt_type)
-        else
-          std.error('invalid pt_type (nil)')
-        end
-      end
+      rule_handler(rule_ctx, lexeme, options)
 
       ::continue::
     end
-  until #next_queue_pts == 0
+  until #next_pts_soon == 0
 
   pt_ctx.pts = next_pts
 end
