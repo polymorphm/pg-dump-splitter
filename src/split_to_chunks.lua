@@ -158,7 +158,7 @@ end
 
 function export.kw_rule_handler(rule_ctx, lexeme, options)
   if lexeme.level == 0 and
-      lexeme.lex_type == options.lex_consts.type_ident and
+      lexeme.lex_subtype == options.lex_consts.subtype_simple_ident and
       lexeme.translated_value == rule_ctx.rule[2] then
     rule_ctx:push_shifted_pt()
   end
