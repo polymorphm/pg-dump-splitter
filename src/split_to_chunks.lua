@@ -271,7 +271,7 @@ function export.extract_dump_data(dump_fd, begin_pos, end_pos)
   return data
 end
 
-function export.split_to_chunks(lex_ctx, dump_fd, dump_path, output_dir,
+function export.split_to_chunks(lex_ctx, dump_fd, dump_path, chunk_ctx,
     hooks_ctx, options)
   local pattern_rules = options:make_pattern_rules()
   local level = 0
@@ -316,22 +316,25 @@ function export.split_to_chunks(lex_ctx, dump_fd, dump_path, output_dir,
           level == 0 and value == ';' then
         local dump_data = export.extract_dump_data(dump_fd,
             pt_ctx.location.lpos, end_pos)
-        local skip = false
+        local skip
 
         if pt_ctx.obj_type then
 
           if hooks_ctx.processed_pt_handler then
-            skip = hooks_ctx:processed_pt_handler(pt_ctx, skip, dump_data)
+            skip = hooks_ctx:processed_pt_handler(pt_ctx,  dump_data)
+          else
+            skip = false
           end
 
           if not skip then
-            -- TODO ... ... ...
-
+            chunk_ctx:add(pt_ctx.obj_type, pt_ctx.obj_values)
           end
         else
           if hooks_ctx.unprocessed_pt_handler then
-            skip = hooks_ctx:unprocessed_pt_handler(pt_ctx, skip, dump_data,
+            skip = hooks_ctx:unprocessed_pt_handler(pt_ctx, dump_data,
                 pt_ctx.error_dump_data)
+          else
+            skip = false
           end
 
           if not skip then
@@ -359,10 +362,12 @@ function export.split_to_chunks(lex_ctx, dump_fd, dump_path, output_dir,
   if pt_ctx then
     local dump_data = export.extract_dump_data(dump_fd,
         pt_ctx.location.lpos, dump_fd:seek() + 1)
-    local skip = false
+    local skip
 
     if hooks_ctx.unprocessed_eof_pt_handler then
-      skip = hooks_ctx:unprocessed_eof_pt_handler(pt_ctx, skip, dump_data)
+      skip = hooks_ctx:unprocessed_eof_pt_handler(pt_ctx, dump_data)
+    else
+      skip = false
     end
 
     if not skip then

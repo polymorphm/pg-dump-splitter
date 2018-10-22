@@ -26,6 +26,25 @@ function export.make_default_options(options)
  }
 end
 
+export.chunk_ctx_proto = {}
+
+function export.chunk_ctx_proto:add(obj_type, obj_values)
+  local skip
+
+  -- TODO   ... ... select directories and file name ...
+
+  if self.hooks_ctx.add_to_chunk_handler then
+    skip = self.hooks_ctx:add_to_chunk_handler(obj_type, obj_values--[[TODO  directories and file name .. should be able to be changed in the handler--]])
+  else
+    skip = false
+  end
+
+  if skip then return end
+
+
+  -- TODO     ... ... ...
+end
+
 function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
   local hooks_ctx = {}
 
@@ -68,8 +87,18 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
           lex_ctx, dump_fd, dump_path, tmp_output_dir)
     end
 
-    options.split_to_chunks(lex_ctx, dump_fd, dump_path, tmp_output_dir,
-        hooks_ctx, options:make_split_to_chunks_options())
+    local chunk_ctx = std.setmetatable(
+      {
+        output_dir = tmp_output_dir,
+        hooks_ctx = hooks_ctx,
+        options = options,
+      },
+      {__index = export.chunk_ctx_proto}
+    )
+
+    options.split_to_chunks(lex_ctx, dump_fd, dump_path,
+        chunk_ctx, hooks_ctx,
+        options:make_split_to_chunks_options())
 
     if hooks_ctx.end_split_to_chunks_handler then
       hooks_ctx:end_split_to_chunks_handler()
