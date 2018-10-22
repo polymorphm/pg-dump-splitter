@@ -7,9 +7,7 @@ function export.make_options_from_pg_dump_splitter(options)
     read_size = options.read_size,
     lex_consts = options.lex_consts,
     lex_trans_more = options.lex_trans_more,
-    make_lex_ctx = options.make_lex_ctx,
-    open = options.open,
-    mkdir = options.mkdir,
+    make_pattern_rules = options.make_pattern_rules,
   }
 end
 
@@ -280,7 +278,7 @@ end
 
 function export.split_to_chunks(lex_ctx, dump_fd, dump_path, output_dir,
     hooks_ctx, options)
-  local pattern_rules = export.make_pattern_rules(options)
+  local pattern_rules = options:make_pattern_rules()
   local level = 0
   local pt_ctx
 

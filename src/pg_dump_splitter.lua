@@ -19,6 +19,7 @@ function export.make_default_options(options)
     rename = std.os.rename,
     make_split_to_chunks_options =
         split_to_chunks.make_options_from_pg_dump_splitter,
+    make_pattern_rules = split_to_chunks.make_pattern_rules,
     split_to_chunks = split_to_chunks.split_to_chunks,
     --make_sort_chunks_options = XXXXXXX.make_options_from_pg_dump_splitter,
     --sort_chunks = XXXXXXX.sort_chunks,
