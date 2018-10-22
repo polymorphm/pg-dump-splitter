@@ -191,12 +191,7 @@ function export.en_rule_handler(rule_ctx, lexeme, options)
           ' or ' .. rule_ctx.obj_type)
     elseif not rule_ctx.pt_ctx.obj_type then
       rule_ctx.pt_ctx.obj_type = rule_ctx.obj_type
-
-      if rule_ctx.value_version then
-        for k, v in std.pairs(rule_ctx.value_version) do
-          rule_ctx.pt_ctx[k] = v
-        end
-      end
+      rule_ctx.pt_ctx.obj_values = rule_ctx.value_version
     end
   end
 end
