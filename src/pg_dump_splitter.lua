@@ -2,6 +2,7 @@ local std, _ENV = _ENV
 
 local lex = std.require 'lex'
 local os_ext = std.require 'os_ext'
+--local sort_chunks = std.require 'sort_chunks'
 local split_to_chunks = std.require 'split_to_chunks'
 
 local export = {}
@@ -9,7 +10,7 @@ local export = {}
 function export.make_default_options(options)
   return {
     lex_max_size = 16 * 1024 * 1024,
-    read_size = 128 * 1024,
+    io_size = 128 * 1024,
     lex_consts = lex.consts,
     lex_trans_more = false,
     lexemes_in_pt_ctx = false,
@@ -18,12 +19,15 @@ function export.make_default_options(options)
     mkdir = os_ext.mkdir,
     --readdir = os_ext.readdir,
     rename = std.os.rename,
+    --make_sort_chunks_options =
+    --    sort_chunks.make_options_from_pg_dump_splitter,
+    make_pattern_rules_options =
+        split_to_chunks.make_options_from_pg_dump_splitter,
     make_split_to_chunks_options =
         split_to_chunks.make_options_from_pg_dump_splitter,
     make_pattern_rules = split_to_chunks.make_pattern_rules,
     split_to_chunks = split_to_chunks.split_to_chunks,
-    --make_sort_chunks_options = XXXXXXX.make_options_from_pg_dump_splitter,
-    --sort_chunks = XXXXXXX.sort_chunks,
+    --sort_chunks = sort_chunks.sort_chunks,
   }
 end
 
@@ -78,16 +82,9 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     end
 
     lex_ctx = options.make_lex_ctx(options.lex_max_size)
-    dump_fd = std.assert(options.open(dump_path))
-    std.assert(options.mkdir(tmp_output_dir))
 
-    if hooks_ctx.made_output_dir_handler then
-      hooks_ctx:made_output_dir_handler(tmp_output_dir)
-    end
-    if hooks_ctx.begin_split_to_chunks_handler then
-      hooks_ctx:begin_split_to_chunks_handler(
-          lex_ctx, dump_fd, dump_path, tmp_output_dir)
-    end
+    local pattern_rules = options.make_pattern_rules(
+        options:make_pattern_rules_options())
 
     local chunk_ctx = std.setmetatable(
       {
@@ -98,8 +95,19 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       {__index = export.chunk_ctx_proto}
     )
 
-    options.split_to_chunks(lex_ctx, dump_fd, dump_path,
-        chunk_ctx, hooks_ctx,
+    dump_fd = std.assert(options.open(dump_path))
+    std.assert(options.mkdir(tmp_output_dir))
+
+    if hooks_ctx.made_output_dir_handler then
+      hooks_ctx:made_output_dir_handler(tmp_output_dir)
+    end
+    if hooks_ctx.begin_split_to_chunks_handler then
+      hooks_ctx:begin_split_to_chunks_handler(lex_ctx, dump_fd,
+          pattern_rules, chunk_ctx)
+    end
+
+    options.split_to_chunks(lex_ctx, dump_fd,
+        pattern_rules, chunk_ctx, hooks_ctx,
         options:make_split_to_chunks_options())
 
     if hooks_ctx.end_split_to_chunks_handler then

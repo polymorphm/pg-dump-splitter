@@ -4,7 +4,7 @@ local export = {}
 
 function export.make_options_from_pg_dump_splitter(options)
   return {
-    read_size = options.read_size,
+    io_size = options.io_size,
     lex_consts = options.lex_consts,
     lex_trans_more = options.lex_trans_more,
     make_pattern_rules = options.make_pattern_rules,
@@ -20,7 +20,7 @@ function export.lex_ctx_iter_item(iter_ctx)
 
     if iter_ctx.final then return end
 
-    local buf = iter_ctx.dump_fd:read(iter_ctx.options.read_size)
+    local buf = iter_ctx.dump_fd:read(iter_ctx.options.io_size)
     local items = {}
     local function yield(...)
       std.table.insert(items, std.table.pack(...))
@@ -278,9 +278,8 @@ function export.extract_dump_data(dump_fd, begin_pos, end_pos)
   return data
 end
 
-function export.split_to_chunks(lex_ctx, dump_fd, dump_path, chunk_ctx,
-    hooks_ctx, options)
-  local pattern_rules = options:make_pattern_rules()
+function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
+    chunk_ctx, hooks_ctx, options)
   local level = 0
   local pt_ctx
 
