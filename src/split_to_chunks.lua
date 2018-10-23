@@ -8,6 +8,7 @@ function export.make_options_from_pg_dump_splitter(options)
     lex_consts = options.lex_consts,
     lex_trans_more = options.lex_trans_more,
     make_pattern_rules = options.make_pattern_rules,
+    lexemes_in_pt_ctx = options.lexemes_in_pt_ctx,
   }
 end
 
@@ -219,6 +220,20 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
   local next_pts = {}
   local next_pts_soon = pt_ctx.pts
 
+  local lexeme = {
+    lex_type = lex_type,
+    lex_subtype = lex_subtype,
+    location = location,
+    value = value,
+    translated_value = translated_value,
+    level = level,
+  }
+
+  if options.lexemes_in_pt_ctx then
+    if not pt_ctx.lexemes then pt_ctx.lexemes = {} end
+    std.table.insert(pt_ctx.lexemes, lexeme)
+  end
+
   repeat
     local pts = next_pts_soon
     next_pts_soon = {}
@@ -244,14 +259,6 @@ function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
         },
         {__index = export.rule_ctx_proto}
       )
-      local lexeme = {
-        lex_type = lex_type,
-        lex_subtype = lex_subtype,
-        location = location,
-        value = value,
-        translated_value = translated_value,
-        level = level,
-      }
 
       rule_handler(rule_ctx, lexeme, options)
 

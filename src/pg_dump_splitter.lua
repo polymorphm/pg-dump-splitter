@@ -12,6 +12,7 @@ function export.make_default_options(options)
     read_size = 128 * 1024,
     lex_consts = lex.consts,
     lex_trans_more = false,
+    lexemes_in_pt_ctx = false,
     make_lex_ctx = lex.make_ctx,
     open = std.io.open,
     mkdir = os_ext.mkdir,
