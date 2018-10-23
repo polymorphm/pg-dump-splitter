@@ -158,7 +158,7 @@ function export.rule_ctx_proto:push_shifted_pt()
 end
 
 function export.kw_rule_handler(rule_ctx, lexeme, options)
-  if lexeme.level == 0 and
+  if lexeme.level == 1 and
       lexeme.lex_subtype == options.lex_consts.subtype_simple_ident and
       lexeme.translated_value == rule_ctx.rule[2] then
     rule_ctx:push_shifted_pt()
@@ -166,7 +166,7 @@ function export.kw_rule_handler(rule_ctx, lexeme, options)
 end
 
 function export.ss_rule_handler(rule_ctx, lexeme, options)
-  if lexeme.level == 0 and
+  if lexeme.level == 1 and
       lexeme.lex_subtype == options.lex_consts.subtype_special_symbols and
       lexeme.value == rule_ctx.rule[2] then
     rule_ctx:push_shifted_pt()
@@ -174,7 +174,7 @@ function export.ss_rule_handler(rule_ctx, lexeme, options)
 end
 
 function export.ident_rule_handler(rule_ctx, lexeme, options)
-  if lexeme.level == 0 and
+  if lexeme.level == 1 and
       lexeme.lex_type == options.lex_consts.type_ident then
     rule_ctx:put_value(rule_ctx.rule[2], lexeme.translated_value)
     rule_ctx:push_shifted_pt()
@@ -182,7 +182,7 @@ function export.ident_rule_handler(rule_ctx, lexeme, options)
 end
 
 function export.en_rule_handler(rule_ctx, lexeme, options)
-  if lexeme.level == 0 and
+  if lexeme.level == 1 and
       lexeme.lex_subtype == options.lex_consts.subtype_special_symbols and
       lexeme.value == ';' then
     if rule_ctx.pt_ctx.obj_type and
@@ -282,7 +282,7 @@ end
 
 function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
     chunks_ctx, hooks_ctx, options)
-  local level = 0
+  local level = 1
   local pt_ctx
 
   for lex_type, lex_subtype, location, value, translated_value
@@ -291,9 +291,9 @@ function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
           value == ')' then
       level = level - 1
 
-      if level < 0 then
+      if level < 1 then
         std.error('pos(' .. location.lpos .. ') line(' .. location.lline ..
-            ') col(' .. location.lcol .. '): level < 0')
+            ') col(' .. location.lcol .. '): level < 1')
       end
     end
 
@@ -321,7 +321,7 @@ function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
           value, translated_value, level, options)
 
       if lex_subtype == options.lex_consts.subtype_special_symbols and
-          level == 0 and value == ';' then
+          level == 1 and value == ';' then
         local dump_data = export.extract_dump_data(dump_fd,
             pt_ctx.location.lpos, end_pos)
         local skip
@@ -350,7 +350,8 @@ function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
                   pt_ctx.location.lline ..
                   ') col(' .. pt_ctx.location.lcol ..
                   '): unprocessed pattern:\n' .. dump_data ..
-                  '\n----------\n' .. pt_ctx.error_dump_data)
+                  '\n' .. ('-'):rep(60) .. '\n' ..
+                  pt_ctx.error_dump_data)
           end
         end
 
