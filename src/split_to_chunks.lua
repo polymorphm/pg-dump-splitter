@@ -328,13 +328,13 @@ function export.split_to_chunks(lex_ctx, dump_fd, dump_path, chunk_ctx,
         if pt_ctx.obj_type then
 
           if hooks_ctx.processed_pt_handler then
-            skip = hooks_ctx:processed_pt_handler(pt_ctx,  dump_data)
+            skip = hooks_ctx:processed_pt_handler(pt_ctx, dump_data)
           else
             skip = false
           end
 
           if not skip then
-            chunk_ctx:add(pt_ctx.obj_type, pt_ctx.obj_values)
+            chunk_ctx:add(pt_ctx.obj_type, pt_ctx.obj_values, dump_data)
           end
         else
           if hooks_ctx.unprocessed_pt_handler then

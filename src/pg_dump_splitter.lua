@@ -24,18 +24,19 @@ function export.make_default_options(options)
     split_to_chunks = split_to_chunks.split_to_chunks,
     --make_sort_chunks_options = XXXXXXX.make_options_from_pg_dump_splitter,
     --sort_chunks = XXXXXXX.sort_chunks,
- }
+  }
 end
 
 export.chunk_ctx_proto = {}
 
-function export.chunk_ctx_proto:add(obj_type, obj_values)
+function export.chunk_ctx_proto:add(obj_type, obj_values, dump_data)
   local skip
 
   -- TODO   ... ... select directories and file name ...
 
   if self.hooks_ctx.add_to_chunk_handler then
-    skip = self.hooks_ctx:add_to_chunk_handler(obj_type, obj_values--[[TODO  directories and file name .. should be able to be changed in the handler--]])
+    skip = self.hooks_ctx:add_to_chunk_handler(obj_type, obj_values,
+        dump_data--[[TODO  directories and file name .. should be able to be changed in the handler--]])
   else
     skip = false
   end
