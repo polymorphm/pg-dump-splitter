@@ -281,7 +281,7 @@ function export.extract_dump_data(dump_fd, begin_pos, end_pos)
 end
 
 function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
-    chunk_ctx, hooks_ctx, options)
+    chunks_ctx, hooks_ctx, options)
   local level = 0
   local pt_ctx
 
@@ -335,7 +335,7 @@ function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
           end
 
           if not skip then
-            chunk_ctx:add(pt_ctx.obj_type, pt_ctx.obj_values, dump_data)
+            chunks_ctx:add(pt_ctx.obj_type, pt_ctx.obj_values, dump_data)
           end
         else
           if hooks_ctx.unprocessed_pt_handler then
