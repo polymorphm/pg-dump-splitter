@@ -18,18 +18,19 @@ function export.make_default_options(options)
     lex_consts = lex.consts,
     make_lex_ctx = lex.make_ctx,
     open = std.io.open,
+    tmpfile = std.io.tmpfile,
     mkdir = os_ext.mkdir,
     rename = std.os.rename,
     make_add_to_chunk_options =
         sort_chunks.make_options_from_pg_dump_splitter,
     make_sort_rules_options =
         sort_chunks.make_options_from_pg_dump_splitter,
-    make_sort_chunk_options =
-        sort_chunks.make_options_from_pg_dump_splitter,
     make_pattern_rules_options =
         split_to_chunks.make_options_from_pg_dump_splitter,
     make_split_to_chunks_options =
         split_to_chunks.make_options_from_pg_dump_splitter,
+    make_sort_chunk_options =
+        sort_chunks.make_options_from_pg_dump_splitter,
     add_to_chunk = sort_chunks.add_to_chunk,
     make_sort_rules = sort_chunks.make_sort_rules,
     make_pattern_rules = split_to_chunks.make_pattern_rules,
@@ -67,7 +68,8 @@ function export.chunks_ctx_proto:add(obj_type, obj_values, dump_data)
         filename, order, dump_data, raw_path, ready_path)
   end
 
-  std.table.insert(self.paths, {raw_path, ready_path})
+  local buf = ('ss'):pack(raw_path, ready_path)
+  self.paths_fd:write(('j'):pack(#buf), buf)
 end
 
 function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
@@ -86,6 +88,7 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
 
   local lex_ctx
   local dump_fd
+  local paths_fd
 
   local ok, err = std.xpcall(function()
     if hooks_ctx.begin_program_handler then
@@ -101,6 +104,13 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     end
 
     lex_ctx = options.make_lex_ctx(options.lex_max_size)
+    dump_fd = std.assert(options.open(dump_path))
+    paths_fd = std.assert(options.tmpfile())
+    std.assert(options.mkdir(tmp_output_dir))
+
+    if hooks_ctx.made_output_dir_handler then
+      hooks_ctx:made_output_dir_handler(tmp_output_dir)
+    end
 
     local sort_rules = options.make_sort_rules(
         options:make_sort_rules_options())
@@ -108,25 +118,17 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     local pattern_rules = options.make_pattern_rules(
         options:make_pattern_rules_options())
 
-    local paths = {}
-
     local chunks_ctx = std.setmetatable(
       {
         sort_rules = sort_rules,
         output_dir = tmp_output_dir,
         hooks_ctx = hooks_ctx,
         options = options,
-        paths = paths,
+        paths_fd = paths_fd,
       },
       {__index = export.chunks_ctx_proto}
     )
 
-    dump_fd = std.assert(options.open(dump_path))
-    std.assert(options.mkdir(tmp_output_dir))
-
-    if hooks_ctx.made_output_dir_handler then
-      hooks_ctx:made_output_dir_handler(tmp_output_dir)
-    end
     if hooks_ctx.begin_split_to_chunks_handler then
       hooks_ctx:begin_split_to_chunks_handler(lex_ctx, dump_fd,
           pattern_rules, chunks_ctx)
@@ -139,12 +141,22 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     if hooks_ctx.end_split_to_chunks_handler then
       hooks_ctx:end_split_to_chunks_handler()
     end
+
+    paths_fd:write(('j'):pack(0))
+    paths_fd:seek('set', 0)
+
     if hooks_ctx.begin_sort_chunks_handler then
       hooks_ctx:begin_sort_chunks_handler(tmp_output_dir)
     end
 
-    for i, v in std.ipairs(paths) do
-      local raw_path, ready_path = std.table.unpack(v)
+    while true do
+      local buf = paths_fd:read(('j'):packsize())
+      local size = ('j'):unpack(buf)
+
+      if size == 0 then break end
+
+      buf = paths_fd:read(size)
+      local raw_path, ready_path = ('ss'):unpack(buf)
 
       options.sort_chunk(raw_path, ready_path,
           options:make_sort_chunk_options())
@@ -168,6 +180,7 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     end
   end, std.debug.traceback)
 
+  if paths_fd then paths_fd:close() end
   if dump_fd then dump_fd:close() end
   if lex_ctx then lex_ctx:free() end
 
