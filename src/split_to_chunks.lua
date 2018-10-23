@@ -92,7 +92,7 @@ function export.make_pattern_rules(options)
     },
 
     {
-      'function_owner',
+      'alter_function_owner',
       {kw, 'alter'},
       {kw, 'function'},
       {
@@ -109,7 +109,9 @@ function export.make_pattern_rules(options)
       {ss, '('},
       {any},
       {ss, ')'},
-      {any},
+      {kw, 'owner'},
+      {kw, 'to'},
+      {ident, 'obj_owner'},
       {en},
     },
 
