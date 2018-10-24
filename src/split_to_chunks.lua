@@ -56,7 +56,7 @@ end
 function export.make_pattern_rules(options)
   local kw = export.kw_rule_handler
   local ss = export.ss_rule_handler
-  local ident = export.ident_rule_handler
+  local ident = export.make_ident_rule_handler()
   local str = export.str_rule_handler
   local en = export.en_rule_handler
   local any =  export.any_rule_handler
@@ -567,11 +567,33 @@ function export.ss_rule_handler(rule_ctx, lexeme, options)
   end
 end
 
-function export.ident_rule_handler(rule_ctx, lexeme, options)
-  if lexeme.level == 1 and
-      lexeme.lex_type == options.lex_consts.type_ident then
-    rule_ctx:put_value(rule_ctx.rule[2], lexeme.translated_value)
-    rule_ctx:push_shifted_pt()
+function export.make_ident_rule_handler()
+  -- reserved key words got from
+  -- https://www.postgresql.org/docs/11/static/sql-keywords-appendix.html
+  local reserved_kw = {'all', 'analyse', 'analyze', 'and', 'any', 'array', 'as',
+      'asc', 'asymmetric', 'both', 'case', 'cast', 'check', 'collate',
+      'column', 'constraint', 'create', 'current_catalog', 'current_date',
+      'current_role', 'current_time', 'current_timestamp', 'current_user',
+      'default', 'deferrable', 'desc', 'distinct', 'do', 'else', 'end',
+      'except', 'false', 'fetch', 'for', 'foreign', 'from', 'grant', 'group',
+      'having', 'in', 'initially', 'intersect', 'into', 'lateral', 'leading',
+      'limit', 'localtime', 'localtimestamp', 'not', 'null', 'offset', 'on',
+      'only', 'or', 'order', 'placing', 'primary', 'references', 'returning',
+      'select', 'session_user', 'some', 'symmetric', 'table', 'then', 'to',
+      'trailing', 'true', 'union', 'unique', 'user', 'using', 'variadic',
+      'when', 'where', 'window', 'with'}
+
+  local reserved_kw_set = {}
+  for i, v in std.ipairs(reserved_kw) do reserved_kw_set[v] = true end
+
+  return function(rule_ctx, lexeme, options)
+    if lexeme.level == 1 and
+        lexeme.lex_type == options.lex_consts.type_ident and
+        not (lexeme.lex_subtype == options.lex_consts.subtype_simple_ident and
+            reserved_kw_set[lexeme.translated_value]) then
+      rule_ctx:put_value(rule_ctx.rule[2], lexeme.translated_value)
+      rule_ctx:push_shifted_pt()
+    end
   end
 end
 
