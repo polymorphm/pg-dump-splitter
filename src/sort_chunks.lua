@@ -7,6 +7,7 @@ function export.make_options_from_pg_dump_splitter(options)
     io_size = options.io_size,
     open = options.open,
     mkdir = options.mkdir,
+    ident_str_to_file_str = options.ident_str_to_file_str,
     no_schema_dirs = options.no_schema_dirs,
     relaxed_order = options.relaxed_order,
   }
@@ -88,20 +89,28 @@ function export.make_sort_rules(options)
   return sort_rules
 end
 
-function export.directory_to_ready(directory)
-  -- TODO     ... ... ...
-end
-
-function export.filename_to_ready(filename)
-  -- TODO     ... ... ...
-end
-
 function export.add_to_chunk(output_dir, directories, filename, order, dump_data, options)
-  local raw_path
-  local ready_path
-  -- TODO ... ...
-  return std.table.concat({output_dir, std.table.concat(directories, '@'), filename, order}, '@@'), -- TEST ONLY
-      std.table.concat({output_dir, std.table.concat(directories, '#'), filename, order}, '##')     -- TEST ONLY
+  local ready_path = output_dir
+
+  for dir_i, dir in std.ipairs(directories) do
+    ready_path = ready_path .. '/' .. options.ident_str_to_file_str(dir)
+
+    options.mkdir(ready_path)
+  end
+
+  ready_path = ready_path .. '/' .. options.ident_str_to_file_str(filename) .. '.sql'
+  local raw_path = ready_path .. '.chunk'
+  local chunk_fd
+
+  local ok, err = std.xpcall(function()
+    -- TODO ... ... ...
+  end, std.debug.traceback)
+
+  if chunk_fd then chunk_fd:close() end
+
+  std.assert(ok, err)
+
+  return raw_path, ready_path
 end
 
 function export.sort_chunk (raw_path, ready_path, options)

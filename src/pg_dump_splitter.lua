@@ -21,6 +21,7 @@ function export.make_default_options(options)
     tmpfile = std.io.tmpfile,
     mkdir = os_ext.mkdir,
     rename = std.os.rename,
+    ident_str_to_file_str = export.ident_str_to_file_str,
     make_add_to_chunk_options =
         sort_chunks.make_options_from_pg_dump_splitter,
     make_sort_rules_options =
@@ -40,6 +41,17 @@ function export.make_default_options(options)
 end
 
 export.chunks_ctx_proto = {}
+
+function export.ident_str_to_file_str(ident)
+  local file_str = ident:gsub('%c', '_'):gsub('%s', '_'):gsub('/', '_')
+      :gsub('\\', '_'):gsub(':', '_'):gsub(';', '_'):gsub(',', '_'):sub(1, 160)
+
+  if file_str:sub(1, 1) == '.' then
+    file_str = '_' .. file_str
+  end
+
+  return file_str
+end
 
 function export.chunks_ctx_proto:add(obj_type, obj_values, dump_data)
   local skip
