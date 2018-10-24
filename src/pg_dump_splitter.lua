@@ -16,7 +16,7 @@ function export.make_default_options(options)
     save_unprocessed = false,
     no_schema_dirs = false,
     relaxed_order = false,
-    sql_footer = '-- v' .. 'i:ts=2:sw=2:et\n',
+    sql_footer = '-- v' .. 'i:ts=2:sw=2:et',
     lex_consts = lex.consts,
     make_lex_ctx = lex.make_ctx,
     open = std.io.open,

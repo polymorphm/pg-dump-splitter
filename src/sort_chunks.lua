@@ -196,7 +196,9 @@ function export.sort_chunk (raw_path, ready_path, options)
       sql_fd:write(v[2], '\n\n')
     end
 
-    sql_fd:write(options.sql_footer)
+    if options.sql_footer then
+      sql_fd:write(options.sql_footer .. '\n')
+    end
   end, std.debug.traceback)
 
   if sql_fd then sql_fd:close() end

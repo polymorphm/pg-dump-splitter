@@ -38,6 +38,10 @@ void (*argp_program_version_hook) (FILE *, struct argp_state *) =
 
 struct arguments
 {
+    int save_unprocessed;
+    int no_schema_dirs;
+    int relaxed_order;
+    char *sql_footer;
     char *dump_path;
     char *output_dir;
     char *hooks_path;
@@ -46,10 +50,31 @@ struct arguments
 static struct argp_option argp_options[] =
 {
     {
+        .name = "save-unprocessed",
+        .key = 701,
+        .doc = "Save unprocessed dump chunks instead of yielding error",
+    },
+    {
+        .name = "no-schema-dirs",
+        .key = 702,
+        .doc = "Alternative file tree layout to saving sorted dump chunks",
+    },
+    {
+        .name = "relaxed-order",
+        .key = 703,
+        .doc = "Relaxed order of sorting dump chunks",
+    },
+    {
+        .name = "sql-footer",
+        .key = 704,
+        .arg = "SQL-FOOTER",
+        .doc = "A footer that will be added to end of each sorted dump chunk",
+    },
+    {
         .name = "hooks",
         .key = 'k',
         .arg = "LUA-FILE",
-        .doc = "Path to a lua file, the script which defines hooks"
+        .doc = "Path to a lua file, the script which defines hooks",
     },
     {},
 };
@@ -61,6 +86,34 @@ argp_parser (int key, char *arg, struct argp_state *state)
 
     switch (key)
     {
+        case 701:
+            arguments->save_unprocessed = 1;
+
+            break;
+
+        case 702:
+            arguments->no_schema_dirs = 1;
+
+            break;
+
+        case 703:
+            arguments->relaxed_order = 1;
+
+            break;
+
+        case 704:
+            if (arguments->sql_footer)
+            {
+                argp_error (state,
+                        "attempt to redefine argument for option \"sql-footer\"");
+
+                return EINVAL;
+            }
+
+            arguments->sql_footer = strdup (arg);
+
+            break;
+
         case 'k':
             if (arguments->hooks_path)
             {
@@ -133,13 +186,34 @@ bootstrap (lua_State *L)
     luaL_requiref (L, "pg_dump_splitter", luaopen_pg_dump_splitter, 0);
 
     lua_getfield (L, -1, "make_default_options");
-    lua_call (L, 0, 1); // return to var options
+    lua_call (L, 0, 1); // returns var: options
+
+    if (lua_toboolean (L, 1)) // arg: save_unprocessed
+    {
+        lua_pushboolean (L, 1);
+        lua_setfield (L, -2, "save_unprocessed");
+    }
+    if (lua_toboolean (L, 2)) // arg: no_schema_dirs
+    {
+        lua_pushboolean (L, 1);
+        lua_setfield (L, -2, "no_schema_dirs");
+    }
+    if (lua_toboolean (L, 3)) // arg: relaxed_order
+    {
+        lua_pushboolean (L, 1);
+        lua_setfield (L, -2, "relaxed_order");
+    }
+    if (lua_toboolean (L, 4)) // arg: sql_footer
+    {
+        lua_pushvalue (L, 4);
+        lua_setfield (L, -2, "sql_footer");
+    }
 
     lua_getfield (L, -2, "pg_dump_splitter");
-    lua_pushvalue (L, 1); // arg dump_path
-    lua_pushvalue (L, 2); // arg output_dir
-    lua_pushvalue (L, 3); // arg hooks_path
-    lua_pushvalue (L, -5); // var options
+    lua_pushvalue (L, 5); // arg: dump_path
+    lua_pushvalue (L, 6); // arg: output_dir
+    lua_pushvalue (L, 7); // arg: hooks_path
+    lua_pushvalue (L, -5); // var: options
     lua_call (L, 4, 0);
 
     return 0;
@@ -177,19 +251,19 @@ main (int argc, char *argv[])
     lua_pushcfunction (L, traceback_msgh);
     lua_pushcfunction (L, bootstrap);
 
+    lua_pushboolean (L, arguments.save_unprocessed);
+    lua_pushboolean (L, arguments.no_schema_dirs);
+    lua_pushboolean (L, arguments.relaxed_order);
+    lua_pushstring (L, arguments.sql_footer);
     lua_pushstring (L, arguments.dump_path);
-    free (arguments.dump_path);
-    arguments.dump_path = 0;
-
     lua_pushstring (L, arguments.output_dir);
-    free (arguments.output_dir);
-    arguments.output_dir = 0;
-
     lua_pushstring (L, arguments.hooks_path);
+    free (arguments.sql_footer);
+    free (arguments.dump_path);
+    free (arguments.output_dir);
     free (arguments.hooks_path);
-    arguments.hooks_path = 0;
 
-    int lua_err = lua_pcall (L, 3, 0, -5);
+    int lua_err = lua_pcall (L, 7, 0, -9);
 
     if (lua_err)
     {
