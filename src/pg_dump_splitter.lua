@@ -15,11 +15,13 @@ function export.make_default_options(options)
     lexemes_in_pt_ctx = false,
     no_schema_dirs = false,
     relaxed_order = false,
+    sql_footer = '-- v' .. 'i:ts=2:sw=2:et\n',
     lex_consts = lex.consts,
     make_lex_ctx = lex.make_ctx,
     open = std.io.open,
     tmpfile = std.io.tmpfile,
     mkdir = os_ext.mkdir,
+    remove = std.os.remove,
     rename = std.os.rename,
     ident_str_to_file_str = export.ident_str_to_file_str,
     make_add_to_chunk_options =
@@ -156,7 +158,6 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       hooks_ctx:end_split_to_chunks_handler()
     end
 
-    paths_fd:write(('j'):pack(0))
     paths_fd:seek('set', 0)
 
     if hooks_ctx.begin_sort_chunks_handler then
@@ -165,12 +166,18 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
 
     while true do
       local buf = paths_fd:read(('j'):packsize())
-      local size = ('j'):unpack(buf)
 
-      if size == 0 then break end
+      if not buf then break end
 
-      buf = paths_fd:read(size)
+      buf = paths_fd:read((('j'):unpack(buf)))
       local raw_path, ready_path = ('ss'):unpack(buf)
+
+      local ready_fd = options.open(ready_path)
+
+      if ready_fd then
+        ready_fd:close()
+        goto sort_continue
+      end
 
       options.sort_chunk(raw_path, ready_path,
           options:make_sort_chunk_options())
@@ -178,6 +185,8 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       if hooks_ctx.sorted_chunk_handler then
         hooks_ctx:sorted_chunk_handler(raw_path, ready_path)
       end
+
+      ::sort_continue::
     end
 
     if hooks_ctx.end_sort_chunks_handler then

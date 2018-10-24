@@ -7,9 +7,11 @@ function export.make_options_from_pg_dump_splitter(options)
     io_size = options.io_size,
     open = options.open,
     mkdir = options.mkdir,
+    remove = options.remove,
     ident_str_to_file_str = options.ident_str_to_file_str,
     no_schema_dirs = options.no_schema_dirs,
     relaxed_order = options.relaxed_order,
+    sql_footer = options.sql_footer,
   }
 end
 
@@ -103,7 +105,9 @@ function export.add_to_chunk(output_dir, directories, filename, order, dump_data
   local chunk_fd
 
   local ok, err = std.xpcall(function()
-    -- TODO ... ... ...
+    chunk_fd = std.assert(options.open(raw_path, 'a'))
+    local buf = ('js'):pack(order, dump_data)
+    chunk_fd:write(('j'):pack(#buf), buf)
   end, std.debug.traceback)
 
   if chunk_fd then chunk_fd:close() end
@@ -114,7 +118,53 @@ function export.add_to_chunk(output_dir, directories, filename, order, dump_data
 end
 
 function export.sort_chunk (raw_path, ready_path, options)
-  -- TODO ... ...
+  local chunk_fd
+  local sql_fd
+
+  local ok, err = std.xpcall(function()
+    chunk_fd = std.assert(options.open(raw_path))
+    sql_fd = std.assert(options.open(ready_path, 'w'))
+
+    local sortable = {}
+
+    while true do
+      local buf = chunk_fd:read(('j'):packsize())
+
+      if not buf then break end
+
+      buf = chunk_fd:read((('j'):unpack(buf)))
+      local order, dump_data = ('js'):unpack(buf)
+
+      if options.relaxed_order then
+        -- relaxed order lets us write data on fly.
+        -- therefore we don't insert to ``sortable``
+
+        sql_fd:write(dump_data, '\n\n')
+      else
+        std.table.insert(sortable, {order, dump_data})
+      end
+    end
+
+    std.table.sort(sortable, function(a, b)
+      if a[1] < b[1] then return true end
+      if a[1] > b[1] then return false end
+
+      return a[2] < b[2]
+    end)
+
+    for i, v in std.ipairs(sortable) do
+      sql_fd:write(v[2], '\n\n')
+    end
+
+    sql_fd:write(options.sql_footer)
+  end, std.debug.traceback)
+
+  if sql_fd then sql_fd:close() end
+  if chunk_fd then chunk_fd:close() end
+
+  std.assert(ok, err)
+
+  std.assert(options.remove(raw_path))
 end
 
 return export
