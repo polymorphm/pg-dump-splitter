@@ -298,12 +298,15 @@ function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
     end
 
     if hooks_ctx.lexeme_handler then
-      lex_type, lex_subtype, location, value, translated_value =
+      lex_type, lex_subtype, location, value, translated_value, level =
           hooks_ctx:lexeme_handler(
-              lex_type, lex_subtype, location, value, translated_value,
-              level)
+              lex_type, lex_subtype, location, value, translated_value, level)
 
       std.assert(lex_type, 'no lex_type')
+      std.assert(lex_subtype, 'no lex_subtype')
+      std.assert(location, 'no location')
+      std.assert(value, 'no value')
+      std.assert(level, 'no level')
     end
 
     if lex_type ~= options.lex_consts.type_comment then

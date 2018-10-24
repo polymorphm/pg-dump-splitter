@@ -51,11 +51,12 @@ function export.chunks_ctx_proto:add(obj_type, obj_values, dump_data)
   local directories, filename, order = rule:handler(obj_type, obj_values)
 
   if self.hooks_ctx.add_to_chunk_handler then
-    directories, filename, order = self.hooks_ctx:add_to_chunk_handler(
-        obj_type, obj_values, directories, filename, order, dump_data)
+    directories, filename, order, dump_data =
+        self.hooks_ctx:add_to_chunk_handler(obj_type, obj_values, directories,
+            filename, order, dump_data)
   end
 
-  if not directories or not filename or not order then
+  if not directories or not filename or not order or not dump_data then
     return
   end
 
