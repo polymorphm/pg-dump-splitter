@@ -19,19 +19,19 @@ function export.regular_rule_handler(rule, obj_type, obj_values)
   local directories, filename
   local obj_title = rule.args[1]
 
-  if obj_values.obj_schema and obj_values.obj_name then
+  std.assert(obj_values.obj_name, 'no object name')
+
+  if obj_values.obj_schema then
     if rule.no_schema_dirs then
       directories = {obj_title}
-      filename = obj_values.obj_name
+      filename = obj_values.obj_schema .. '.' .. obj_values.obj_name
     else
       directories = {obj_values.obj_schema, obj_title}
       filename = obj_values.obj_name
     end
-  elseif obj_values.obj_name_wo_schema then
-    directories = {obj_title}
-    filename = obj_values.obj_name_wo_schema
   else
-    std.error('no object schema/name')
+    directories = {obj_title}
+    filename = obj_values.obj_name
   end
 
   return directories, filename, rule.order
@@ -41,19 +41,19 @@ function export.relative_rule_handler(rule, obj_type, obj_values)
   local directories, filename
   local rel_title = rule.args[1]
 
-  if obj_values.rel_schema and obj_values.rel_name then
+  std.assert(obj_values.rel_name, 'no relative name')
+
+  if obj_values.rel_schema then
     if rule.no_schema_dirs then
       directories = {rel_title}
-      filename = obj_values.rel_name
+      filename = obj_values.rel_schema .. '.' .. obj_values.rel_name
     else
       directories = {obj_values.rel_schema, rel_title}
       filename = obj_values.rel_name
     end
-  elseif obj_values.rel_name_wo_schema then
-    directories = {rel_title}
-    filename = obj_values.rel_name_wo_schema
   else
-    std.error('no relative schema/name')
+    directories = {rel_title}
+    filename = obj_values.rel_name
   end
 
   return directories, filename, rule.order
@@ -65,16 +65,56 @@ function export.rude_rule_handler(rule, obj_type, obj_values)
   return {}, obj_title, rule.order
 end
 
+function export.schema_rule_handler(rule, obj_type, obj_values)
+  local directories, filename
+  local obj_title = rule.args[1]
+
+  std.assert(obj_values.obj_name, 'no object name')
+
+  if rule.no_schema_dirs then
+    directories = {obj_title}
+    filename = obj_values.obj_name
+  else
+    directories = {obj_values.obj_name}
+    filename = obj_title
+  end
+
+  return directories, filename, rule.order
+end
+
 function export.make_sort_rules(options)
   local reg = export.regular_rule_handler
   local rel = export.relative_rule_handler
   local rude = export.rude_rule_handler
+  local schema = export.schema_rule_handler
 
   local items = {
-    {'create_function', reg, 'FUNCTION'},
-    {'alter_function_owner', reg, 'FUNCTION'},
+    {'set', rude, 'MISC'},
+    {'select', rude, 'MISC'},
+    {'unprocessed', rude, 'OTHER'},
 
-    -- TODO ... ... ...
+    {'create_schema', schema, 'SCHEMA'},
+    {'create_extension', reg, 'EXTENSION'},
+    {'create_type', reg, 'TYPE'},
+    {'create_function', reg, 'FUNCTION'},
+    {'create_table', reg, 'TABLE'},
+    {'create_sequence', reg, 'SEQUENCE'},
+
+    {'alter_schema', schema, 'SCHEMA'},
+    {'alter_type', reg, 'TYPE'},
+    {'alter_function', reg, 'FUNCTION'},
+    {'alter_table', reg, 'TABLE'},
+    {'alter_sequence', reg, 'SEQUENCE'},
+
+    {'create_index', rel, 'TABLE'},
+
+    {'comment_extension', reg, 'EXTENSION'},
+    {'comment_type', reg, 'TYPE'},
+
+    {'revoke_function', reg, 'FUNCTION'},
+
+    {'grant_schema', schema, 'SCHEMA'},
+    {'grant_function', reg, 'FUNCTION'},
   }
 
   local sort_rules = {}

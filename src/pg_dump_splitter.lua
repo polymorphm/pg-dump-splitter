@@ -13,6 +13,7 @@ function export.make_default_options(options)
     io_size = 128 * 1024,
     lex_trans_more = false,
     lexemes_in_pt_ctx = false,
+    save_unprocessed = false,
     no_schema_dirs = false,
     relaxed_order = false,
     sql_footer = '-- v' .. 'i:ts=2:sw=2:et\n',

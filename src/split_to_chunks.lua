@@ -9,6 +9,7 @@ function export.make_options_from_pg_dump_splitter(options)
     lex_trans_more = options.lex_trans_more,
     make_pattern_rules = options.make_pattern_rules,
     lexemes_in_pt_ctx = options.lexemes_in_pt_ctx,
+    save_unprocessed = options.save_unprocessed,
   }
 end
 
@@ -56,11 +57,137 @@ function export.make_pattern_rules(options)
   local kw = export.kw_rule_handler
   local ss = export.ss_rule_handler
   local ident = export.ident_rule_handler
+  local str = export.str_rule_handler
   local en = export.en_rule_handler
   local any =  export.any_rule_handler
   local fork = export.fork_rule_handler
+  local rep = export.rep_rule_handler
 
   return {
+    {
+      'set',
+      {kw, 'set'},
+      {any},
+      {en},
+    },
+
+    {
+      'select',
+      {kw, 'select'},
+      {any},
+      {en},
+    },
+
+    {
+      'create_schema',
+      {kw, 'create'},
+      {kw, 'schema'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'not'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_schema',
+      {kw, 'alter'},
+      {kw, 'schema'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'create_extension',
+      {kw, 'create'},
+      {kw, 'extension'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'not'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_extension',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'extension'},
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
+      'create_type',
+      {kw, 'create'},
+      {kw, 'type'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'as'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_type',
+      {kw, 'alter'},
+      {kw, 'type'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_type',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'type'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
     {
       'create_function',
       {kw, 'create'},
@@ -76,13 +203,110 @@ function export.make_pattern_rules(options)
       {
         fork,
         {
-        {ident, 'obj_schema'},
-        {ss, '.'},
-        {ident, 'obj_name'},
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_function',
+      {kw, 'alter'},
+      {kw, 'function'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
+      'create_table',
+      {kw, 'create'},
+      {
+        rep,
+        {
+          fork,
+          {
+            {kw, 'global'}
+          },
+          {
+            {kw, 'local'}
+          },
+          {
+            {kw, 'temporary'}
+          },
+          {
+            {kw, 'temp'}
+          },
+          {
+            {kw, 'unlogged'}
+          },
+        },
+      },
+      {kw, 'table'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'not'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {
+        fork,
+        {
+          {kw, 'partition'},
+          {kw, 'of'},
+          {
+            fork,
+            {
+              {ident, 'parent_schema'},
+              {ss, '.'},
+            },
+            {},
+          },
+          {ident, 'parent_name'},
         },
         {
-          {ident, 'obj_name_wo_schema'},
+          {kw, 'of'},
+          {
+            fork,
+            {
+              {ident, 'type_schema'},
+              {ss, '.'},
+            },
+            {},
+          },
+          {ident, 'type_name'},
         },
+        {},
       },
       {ss, '('},
       {any},
@@ -92,30 +316,200 @@ function export.make_pattern_rules(options)
     },
 
     {
-      'alter_function_owner',
+      'alter_table',
       {kw, 'alter'},
+      {kw, 'table'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {kw, 'only'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'create_sequence',
+      {kw, 'create'},
+      {
+        fork,
+        {
+          {kw, 'temporary'}
+        },
+        {
+          {kw, 'temp'}
+        },
+        {},
+      },
+      {kw, 'sequence'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_sequence',
+      {kw, 'alter'},
+      {kw, 'sequence'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'create_index',
+      {kw, 'create'},
+      {
+        fork,
+        {
+          {kw, 'unique'},
+        },
+        {},
+      },
+      {kw, 'index'},
+      {
+        fork,
+        {
+          {kw, 'concurrently'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {
+            fork,
+            {
+              {kw, 'if'},
+              {kw, 'not'},
+              {kw, 'exists'},
+            },
+            {},
+          },
+          {ident, 'obj_name'},
+        },
+        {},
+      },
+      {kw, 'on'},
+      {
+        fork,
+        {
+          {ident, 'rel_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'rel_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'grant_schema',
+      {kw, 'grant'},
+      {any},
+      {kw, 'on'},
+      {kw, 'schema'},
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'to'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
+      'revoke_function',
+      {kw, 'revoke'},
+      {any},
+      {kw, 'on'},
       {kw, 'function'},
       {
         fork,
         {
           {ident, 'obj_schema'},
           {ss, '.'},
-          {ident, 'obj_name'},
         },
-        {
-          {ident, 'obj_name_wo_schema'},
-        },
+        {},
       },
+      {ident, 'obj_name'},
       {ss, '('},
       {any},
       {ss, ')'},
-      {kw, 'owner'},
-      {kw, 'to'},
-      {ident, 'obj_owner'},
+      {any},
+      {kw, 'from'},
+      {ident, 'role'},
+      {any},
       {en},
     },
 
-    -- TODO ... ... ...
+    {
+      'grant_function',
+      {kw, 'grant'},
+      {any},
+      {kw, 'on'},
+      {kw, 'function'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {kw, 'to'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
   }
 end
 
@@ -181,6 +575,14 @@ function export.ident_rule_handler(rule_ctx, lexeme, options)
   end
 end
 
+function export.str_rule_handler(rule_ctx, lexeme, options)
+  if lexeme.level == 1 and
+      lexeme.lex_type == options.lex_consts.type_string then
+    rule_ctx:put_value(rule_ctx.rule[2], lexeme.translated_value)
+    rule_ctx:push_shifted_pt()
+  end
+end
+
 function export.en_rule_handler(rule_ctx, lexeme, options)
   if lexeme.level == 1 and
       lexeme.lex_subtype == options.lex_consts.subtype_special_symbols and
@@ -215,6 +617,21 @@ function export.fork_rule_handler(rule_ctx, lexeme, options)
 
     rule_ctx:push_pt_soon(next_pt)
   end
+end
+
+function export.rep_rule_handler(rule_ctx, lexeme, options)
+  -- rule: repeat a sequence (in arguments) zero, one or several times
+
+  local next_pt_with_seq = std.table.move(rule_ctx.rule, 2, #rule_ctx.rule,
+      2, {rule_ctx.obj_type})
+  std.table.insert(next_pt_with_seq, rule_ctx.rule)
+  std.table.move(rule_ctx.pt, 3, #rule_ctx.pt,
+      #next_pt_with_seq + 1, next_pt_with_seq)
+
+  local next_pt_wo_seq = rule_ctx:make_shifted_pt()
+
+  rule_ctx:push_pt_soon(next_pt_with_seq)
+  rule_ctx:push_pt_soon(next_pt_wo_seq)
 end
 
 function export.process_pt_ctx(pt_ctx, lex_type, lex_subtype, location,
@@ -346,17 +763,22 @@ function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
             skip = hooks_ctx:unprocessed_pt_handler(pt_ctx, dump_data,
                 pt_ctx.error_dump_data)
           else
-            skip = false
+            skip = options.save_unprocessed
           end
 
           if not skip then
-              std.error('pos(' .. pt_ctx.location.lpos .. ') line(' ..
-                  pt_ctx.location.lline ..
-                  ') col(' .. pt_ctx.location.lcol ..
-                  '): unprocessed pattern:\n' .. dump_data ..
-                  '\n' .. ('-'):rep(60) .. '\n' ..
-                  pt_ctx.error_dump_data)
+            local error_dump_data = pt_ctx.error_dump_data or '(no error_dump_data)'
+
+            std.error('pos(' .. pt_ctx.location.lpos .. ') line(' ..
+                pt_ctx.location.lline ..
+                ') col(' .. pt_ctx.location.lcol ..
+                '): unprocessed pattern:\n' .. dump_data ..
+                '\n' .. ('-'):rep(60) .. '\n' ..
+                error_dump_data)
           end
+
+          chunks_ctx:add(pt_ctx.obj_type or 'unprocessed', pt_ctx.obj_values,
+              dump_data)
         end
 
         pt_ctx = nil
