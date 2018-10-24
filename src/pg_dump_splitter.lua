@@ -61,12 +61,13 @@ function export.chunks_ctx_proto:add(obj_type, obj_values, dump_data)
   end
 
   local raw_path, ready_path = self.options.add_to_chunk(
-      directories, filename, order, dump_data,
+      self.output_dir, directories, filename, order, dump_data,
       self.options:make_add_to_chunk_options())
 
   if self.hooks_ctx.added_to_chunk_handler then
-    self.hooks_ctx:added_to_chunk_handler(obj_type, obj_values, directories,
-        filename, order, dump_data, raw_path, ready_path)
+    self.hooks_ctx:added_to_chunk_handler(obj_type, obj_values,
+        self.output_dir, directories, filename, order, dump_data,
+        raw_path, ready_path)
   end
 
   local buf = ('ss'):pack(raw_path, ready_path)
@@ -100,9 +101,9 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
 
     if hooks_ctx.tmp_output_dir_handler then
       tmp_output_dir = hooks_ctx:tmp_output_dir_handler(tmp_output_dir)
-
-      std.assert(tmp_output_dir, 'no tmp_output_dir')
     end
+
+    std.assert(tmp_output_dir, 'no tmp_output_dir')
 
     lex_ctx = options.make_lex_ctx(options.lex_max_size)
     dump_fd = std.assert(options.open(dump_path))

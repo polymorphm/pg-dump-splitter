@@ -88,10 +88,20 @@ function export.make_sort_rules(options)
   return sort_rules
 end
 
-function export.add_to_chunk(directories, filename, order, dump_data, options)
+function export.directory_to_ready(directory)
+  -- TODO     ... ... ...
+end
+
+function export.filename_to_ready(filename)
+  -- TODO     ... ... ...
+end
+
+function export.add_to_chunk(output_dir, directories, filename, order, dump_data, options)
+  local raw_path
+  local ready_path
   -- TODO ... ...
-  return std.table.concat({std.table.concat(directories, '@'), filename, order}, '@@'), -- TEST ONLY
-      std.table.concat({std.table.concat(directories, '#'), filename, order}, '##')     -- TEST ONLY
+  return std.table.concat({output_dir, std.table.concat(directories, '@'), filename, order}, '@@'), -- TEST ONLY
+      std.table.concat({output_dir, std.table.concat(directories, '#'), filename, order}, '##')     -- TEST ONLY
 end
 
 function export.sort_chunk (raw_path, ready_path, options)
