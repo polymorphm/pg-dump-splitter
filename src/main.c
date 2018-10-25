@@ -68,7 +68,7 @@ static struct argp_option argp_options[] =
         .name = "sql-footer",
         .key = 704,
         .arg = "SQL-FOOTER",
-        .doc = "A footer that will be added to end of each sorted dump chunk",
+        .doc = "A footer that will be added at end of each sorted dump chunk",
     },
     {
         .name = "hooks",
