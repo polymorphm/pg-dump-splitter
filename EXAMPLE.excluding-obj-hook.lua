@@ -7,13 +7,17 @@ function export.register_hooks(hooks_ctx)
       filename, order, dump_data)
     -- we will decide what miss by pattern-matching
 
-    if obj_type == 'grant_function' and obj_values and
-        obj_values.obj_schema:match('._taxi_.') and
-        obj_values.obj_name:match('get_.') and
-        obj_values.role:match('._client') then
+    local obj_schema = obj_values.obj_schema or ''
+    local obj_name = obj_values.obj_name or ''
+    local role = obj_values.role or ''
+
+    if obj_type == 'grant_function' and
+        obj_schema:match('._taxi_.') and
+        obj_name:match('get_.') and
+        role:match('._client') then
 
       -- exclude these grants!
-      -- them will not saved to sorted sump chunks
+      -- them will not be saved to sorted dump chunks
 
       std.print('EXCLUDED:', obj_type,
           std.table.concat(directories, '/') .. '/' .. filename)

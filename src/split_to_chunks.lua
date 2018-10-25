@@ -618,7 +618,7 @@ function export.en_rule_handler(rule_ctx, lexeme, options)
           ' or ' .. rule_ctx.obj_type)
     elseif not rule_ctx.pt_ctx.obj_type then
       rule_ctx.pt_ctx.obj_type = rule_ctx.obj_type
-      rule_ctx.pt_ctx.obj_values = rule_ctx.value_version
+      rule_ctx.pt_ctx.obj_values = rule_ctx.value_version or {}
     end
   end
 end
@@ -799,8 +799,8 @@ function export.split_to_chunks(lex_ctx, dump_fd, pattern_rules,
                 error_dump_data)
           end
 
-          chunks_ctx:add(pt_ctx.obj_type or 'unprocessed', pt_ctx.obj_values,
-              dump_data)
+          chunks_ctx:add(pt_ctx.obj_type or 'unprocessed',
+              pt_ctx.obj_values or {}, dump_data)
         end
 
         pt_ctx = nil
