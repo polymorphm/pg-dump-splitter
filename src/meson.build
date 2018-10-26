@@ -11,6 +11,7 @@ git_rev_c = vcs_tag(command : ['git', 'describe', '--always', '--long', '--dirty
 lua_emb_src = embedder_lua_gen.process(
   'pg_dump_splitter.lua',
   'split_to_chunks.lua',
+  'split_to_chunks_pattern_rules.lua',
   'sort_chunks.lua',
 )
 

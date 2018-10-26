@@ -5,6 +5,9 @@ int
 luaopen_split_to_chunks (lua_State *L);
 
 int
+luaopen_split_to_chunks_pattern_rules (lua_State *L);
+
+int
 luaopen_sort_chunks (lua_State *L);
 
 int
