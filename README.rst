@@ -5,11 +5,31 @@ pg-dump-splitter
 using source code comparing tools to its data. You are able to use this utility
 as a part of big automate script.
 
+Examples of Using
+-----------------
+
+Dumping database::
+
+   $ pg_dump -sfdump.sql -- 'user=postgres dbname=postgres'
+
+An example of simple using pg-dump-splitter::
+
+   $ pg_dump_splitter -- dump.sql db_objects
+
+An example with turning of excluding some parts and suppressing unprocessed
+errors::
+
+   $ pg_dump_splitter --save-unprocessed -kexcluding-obj-hook.lua -- dump.sql db_objects
+
+``db_objects`` will contain grouped parts of ``dump.sql``. To write the
+file ``excluding-obj-hook.lua`` see ``EXAMPLE.excluding-obj-hook.lua`` in
+source code's directory.
+
 Building: A Short Story
 -----------------------
 
 All things are by default, apart of optimization level for GCC.
-All dependencies are from distrib's repository.::
+All dependencies are from distrib's repository::
 
    $ meson --buildtype=release --prefix=/opt/pg-dump-splitter builddir
 
@@ -23,7 +43,7 @@ Building: A Long Story
 ----------------------
 
 Building with manually downloaded lua-library.
-And turning on precompilation of lua-scripts.::
+And turning on precompilation of lua-scripts::
 
    $ pushd ..
 
