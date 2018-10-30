@@ -383,7 +383,7 @@ lex_feed (lua_State *L)
             case 'V' ... 'Z':
             case '_':
                 // no cases 'e' 'E' 'u' 'U' here, cause of them stash behaviour.
-                // no case '0' ... '9' here, cause of starting ident lexeme
+                // no case '0' ... '9' '$' here, cause of starting ident lexeme
 
                 ctx->type = lex_type_ident;
                 ctx->subtype = lex_subtype_simple_ident;
@@ -619,6 +619,7 @@ lex_feed (lua_State *L)
             case 'A' ... 'Z':
             case '_':
             case '0' ... '9':
+            case '$':
                 push_c_to_buf (L, ctx, c);
                 break;
 
