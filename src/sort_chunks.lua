@@ -99,6 +99,7 @@ function export.make_sort_rules(options)
     {'create_function', reg, 'FUNCTION'},
     {'create_table', reg, 'TABLE'},
     {'create_sequence', reg, 'SEQUENCE'},
+    {'create_cast', rude, 'CAST'},
 
     {'alter_schema', schema, 'SCHEMA'},
     {'alter_type', reg, 'TYPE'},
