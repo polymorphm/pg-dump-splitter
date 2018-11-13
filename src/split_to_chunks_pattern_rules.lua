@@ -535,6 +535,26 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'create_trigger',
+      {kw, 'create'},
+      {kw, 'trigger'},
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'on'},
+      {
+        fork,
+        {
+          {ident, 'rel_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'rel_name'},
+      {any},
+      {en},
+    },
+
+    {
       'create_cast',
       {kw, 'create'},
       {kw, 'cast'},

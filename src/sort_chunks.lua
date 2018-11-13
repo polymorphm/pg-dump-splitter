@@ -108,6 +108,7 @@ function export.make_sort_rules(options)
     {'alter_sequence', reg, 'SEQUENCE'},
 
     {'create_index', rel, 'TABLE'},
+    {'create_trigger', rel, 'TABLE'},
 
     {'comment_schema', schema, 'SCHEMA'},
     {'comment_extension', reg, 'EXTENSION'},
