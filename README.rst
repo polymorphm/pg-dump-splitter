@@ -86,3 +86,59 @@ And turning on precompilation of lua-scripts::
    $ sudo ninja install
 
    $ unset PKG_CONFIG_LIBDIR
+
+How to Add a New Pattern Rule to the Utility?
+---------------------------------------------
+
+If some rule turn out to be missing, it isn't  hard to add it to the utility.
+In typical case you need only to fix two places by adding a small code
+fragment in each.
+
+An example of adding ``CREATE TRIGGER`` rule::
+
+   diff --git a/src/split_to_chunks_pattern_rules.lua b/src/split_to_chunks_pattern_rules.lua
+   index 4c0892f..4cd3999 100644
+   --- a/src/split_to_chunks_pattern_rules.lua
+   +++ b/src/split_to_chunks_pattern_rules.lua
+   @@ -534,6 +534,26 @@ function export.make_pattern_rules(handlers)
+          {en},
+        },
+    
+   +    {
+   +      'create_trigger',
+   +      {kw, 'create'},
+   +      {kw, 'trigger'},
+   +      {ident, 'obj_name'},
+   +      {any},
+   +      {kw, 'on'},
+   +      {
+   +        fork,
+   +        {
+   +          {ident, 'rel_schema'},
+   +          {ss, '.'},
+   +        },
+   +        {},
+   +      },
+   +      {ident, 'rel_name'},
+   +      {any},
+   +      {en},
+   +    },
+   +
+        {
+          'create_cast',
+          {kw, 'create'},
+   diff --git a/src/sort_chunks.lua b/src/sort_chunks.lua
+   index f269cc8..7301461 100644
+   --- a/src/sort_chunks.lua
+   +++ b/src/sort_chunks.lua
+   @@ -108,6 +108,7 @@ function export.make_sort_rules(options)
+        {'alter_sequence', reg, 'SEQUENCE'},
+    
+        {'create_index', rel, 'TABLE'},
+   +    {'create_trigger', rel, 'TABLE'},
+    
+        {'comment_schema', schema, 'SCHEMA'},
+        {'comment_extension', reg, 'EXTENSION'},
+
+Fixing of the first place is needed to defining a pattern structure. and
+fixing the second place is needed to defining the way of saving data to fs tree.
