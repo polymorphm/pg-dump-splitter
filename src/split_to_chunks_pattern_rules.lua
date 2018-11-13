@@ -55,6 +55,17 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_schema',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'schema'},
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_extension',
       {kw, 'create'},
       {kw, 'extension'},
@@ -186,6 +197,28 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_function',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'function'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_table',
       {kw, 'create'},
       {
@@ -193,19 +226,19 @@ function export.make_pattern_rules(handlers)
         {
           fork,
           {
-            {kw, 'global'}
+            {kw, 'global'},
           },
           {
-            {kw, 'local'}
+            {kw, 'local'},
           },
           {
-            {kw, 'temporary'}
+            {kw, 'temporary'},
           },
           {
-            {kw, 'temp'}
+            {kw, 'temp'},
           },
           {
-            {kw, 'unlogged'}
+            {kw, 'unlogged'},
           },
         },
       },
@@ -294,6 +327,46 @@ function export.make_pattern_rules(handlers)
       },
       {ident, 'obj_name'},
       {any},
+      {en},
+    },
+
+    {
+      'comment_table',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'table'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
+      'comment_column',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'column'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '.'},
+      {ident, 'col_name'},
+      {kw, 'is'},
+      {str, 'comment'},
       {en},
     },
 

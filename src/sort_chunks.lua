@@ -108,8 +108,12 @@ function export.make_sort_rules(options)
 
     {'create_index', rel, 'TABLE'},
 
+    {'comment_schema', schema, 'SCHEMA'},
     {'comment_extension', reg, 'EXTENSION'},
     {'comment_type', reg, 'TYPE'},
+    {'comment_function', reg, 'FUNCTION'},
+    {'comment_table', reg, 'TABLE'},
+    {'comment_column', reg, 'TABLE'},
 
     {'revoke_function', reg, 'FUNCTION'},
 
