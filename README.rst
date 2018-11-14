@@ -90,9 +90,9 @@ And turning on precompilation of lua-scripts::
 How to Add a New Pattern Rule to the Utility?
 ---------------------------------------------
 
-If some rule turn out to be missing, it isn't  hard to add it to the utility.
-In typical case you need only to fix two places by adding a small code
-fragment in each.
+If some rule turn out to be missing, it isn't hard to add it to the utility.
+In typical case you need only to put a few lines to two places of the source
+code.
 
 An example of adding ``CREATE TRIGGER`` rule::
 
@@ -103,7 +103,7 @@ An example of adding ``CREATE TRIGGER`` rule::
    @@ -534,6 +534,26 @@ function export.make_pattern_rules(handlers)
           {en},
         },
-    
+
    +    {
    +      'create_trigger',
    +      {kw, 'create'},
@@ -133,12 +133,18 @@ An example of adding ``CREATE TRIGGER`` rule::
    +++ b/src/sort_chunks.lua
    @@ -108,6 +108,7 @@ function export.make_sort_rules(options)
         {'alter_sequence', reg, 'SEQUENCE'},
-    
+
         {'create_index', rel, 'TABLE'},
    +    {'create_trigger', rel, 'TABLE'},
-    
+
         {'comment_schema', schema, 'SCHEMA'},
         {'comment_extension', reg, 'EXTENSION'},
 
 Fixing of the first place is needed to defining a pattern structure. and
-fixing the second place is needed to defining the way of saving data to fs tree.
+fixing the second place is needed to defining the way of saving data to fs
+tree.
+
+But if recompilation of the utility isn't possible, you still can use
+handlers registered in ``hooks.lua`` to making decorators to the functions
+above that make them more rich by patterns you needed. Building the utility
+from modified sources isn't required in this case.
