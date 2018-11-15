@@ -104,6 +104,7 @@ function export.make_sort_rules(options)
     {'create_cast', rude, 'CAST'},
 
     {'alter_schema', schema, 'SCHEMA'},
+    {'alter_default_privileges', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_type', reg, 'TYPE'},
     {'alter_function', reg, 'FUNCTION'},
     {'alter_table', reg, 'TABLE'},

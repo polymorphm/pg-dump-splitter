@@ -105,6 +105,26 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'alter_default_privileges',
+      {kw, 'alter'},
+      {kw, 'default'},
+      {kw, 'privileges'},
+      {kw, 'for'},
+      {
+        fork,
+        {
+          {kw, 'role'},
+        },
+        {
+          {kw, 'user'},
+        },
+      },
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
       'create_extension',
       {kw, 'create'},
       {kw, 'extension'},
