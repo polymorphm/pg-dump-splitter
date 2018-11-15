@@ -66,6 +66,20 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'revoke_schema',
+      {kw, 'revoke'},
+      {any},
+      {kw, 'on'},
+      {kw, 'schema'},
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'from'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
       'grant_schema',
       {kw, 'grant'},
       {any},

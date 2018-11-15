@@ -117,6 +117,7 @@ function export.make_sort_rules(options)
     {'comment_table', reg, 'TABLE'},
     {'comment_column', reg, 'TABLE'},
 
+    {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},
 
     {'grant_schema', schema, 'SCHEMA'},
