@@ -460,6 +460,50 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'revoke_table',
+      {kw, 'revoke'},
+      {any},
+      {kw, 'on'},
+      {kw, 'table'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'from'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
+      'grant_table',
+      {kw, 'grant'},
+      {any},
+      {kw, 'on'},
+      {kw, 'table'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'to'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
       'create_view',
       {kw, 'create'},
       {

@@ -122,9 +122,11 @@ function export.make_sort_rules(options)
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},
+    {'revoke_table', reg, 'TABLE'},
 
     {'grant_schema', schema, 'SCHEMA'},
     {'grant_function', reg, 'FUNCTION'},
+    {'grant_table', reg, 'TABLE'},
   }
 
   local sort_rules = {}
