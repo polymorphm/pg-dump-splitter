@@ -829,6 +829,20 @@ function export.make_pattern_rules(handlers)
       {any},
       {en},
     },
+
+    {
+      'comment_cast',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'cast'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
   }
 end
 
