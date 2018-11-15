@@ -504,6 +504,63 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'create_rule',
+      {kw, 'create'},
+      {
+        fork,
+        {
+          {kw, 'or'},
+          {kw, 'replace'},
+        },
+        {},
+      },
+      {kw, 'rule'},
+      {ident, 'obj_name'},
+      {kw, 'as'},
+      {any},
+      {kw, 'to'},
+      {
+        fork,
+        {
+          {ident, 'rel_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'rel_name'},
+      {
+        fork,
+        {
+          {kw, 'where'},
+          {any},
+        },
+        {},
+      },
+      {kw, 'do'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_rule',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'rule'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_view',
       {kw, 'create'},
       {
