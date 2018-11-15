@@ -119,14 +119,17 @@ function export.make_sort_rules(options)
     {'comment_table', reg, 'TABLE'},
     {'comment_view', reg, 'TABLE'},
     {'comment_column', reg, 'TABLE'},
+    {'comment_sequence', reg, 'TABLE'},
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},
     {'revoke_table', reg, 'TABLE'},
+    {'revoke_sequence', reg, 'TABLE'},
 
     {'grant_schema', schema, 'SCHEMA'},
     {'grant_function', reg, 'FUNCTION'},
     {'grant_table', reg, 'TABLE'},
+    {'grant_sequence', reg, 'TABLE'},
   }
 
   local sort_rules = {}

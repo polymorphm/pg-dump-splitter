@@ -635,6 +635,69 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_sequence',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'sequence'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
+      'revoke_sequence',
+      {kw, 'revoke'},
+      {any},
+      {kw, 'on'},
+      {kw, 'sequence'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'from'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
+      'grant_sequence',
+      {kw, 'grant'},
+      {any},
+      {kw, 'on'},
+      {kw, 'sequence'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'to'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
       'create_index',
       {kw, 'create'},
       {
