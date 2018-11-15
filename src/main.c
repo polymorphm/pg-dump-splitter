@@ -19,10 +19,10 @@
 
 #include "pg-dump-splitter.h"
 
-static const char *const argp_doc = "Splits Postgresql's dump file "
-        "for easily using source code comparing tools "
-        "to its data. You are able to use this utility "
-        "as a part of big automate script.";
+#define ARGP_DOC ("Splits Postgresql's dump file " \
+        "for easily using source code comparing tools " \
+        "to its data. You are able to use this utility " \
+        "as a part of big automate script.")
 
 static void
 argp_print_version (FILE *stream,
@@ -171,7 +171,7 @@ static struct argp argp =
     .options = argp_options,
     .parser = argp_parser,
     .args_doc = "INPUT-DUMP-FILE OUTPUT-DIRECTORY",
-    .doc = argp_doc,
+    .doc = ARGP_DOC,
 };
 
 static int
