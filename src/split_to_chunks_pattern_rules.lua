@@ -460,6 +460,66 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'create_view',
+      {kw, 'create'},
+      {
+        fork,
+        {
+          {kw, 'or'},
+          {kw, 'replace'},
+        },
+        {},
+      },
+      {
+        rep,
+        {
+          fork,
+          {
+            {kw, 'temporary'},
+          },
+          {
+            {kw, 'temp'},
+          },
+          {
+            {kw, 'recursive'},
+          },
+        },
+      },
+      {kw, 'view'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {
+        fork,
+        {
+          {ss, '('},
+          {any},
+          {ss, ')'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {kw, 'with'},
+          {ss, '('},
+          {any},
+          {ss, ')'},
+        },
+        {},
+      },
+      {kw, 'as'},
+      {any},
+      {en},
+    },
+
+    {
       'create_sequence',
       {kw, 'create'},
       {
