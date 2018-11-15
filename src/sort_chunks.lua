@@ -98,15 +98,15 @@ function export.make_sort_rules(options)
     {'create_type', reg, 'TYPE'},
     {'create_function', reg, 'FUNCTION'},
     {'create_table', reg, 'TABLE'},
-    {'create_view', reg, 'VIEW'},
-    {'create_sequence', reg, 'SEQUENCE'},
+    {'create_view', reg, 'TABLE'},
+    {'create_sequence', reg, 'TABLE'},
     {'create_cast', rude, 'CAST'},
 
     {'alter_schema', schema, 'SCHEMA'},
     {'alter_type', reg, 'TYPE'},
     {'alter_function', reg, 'FUNCTION'},
     {'alter_table', reg, 'TABLE'},
-    {'alter_sequence', reg, 'SEQUENCE'},
+    {'alter_sequence', reg, 'TABLE'},
 
     {'create_index', rel, 'TABLE'},
     {'create_trigger', rel, 'TABLE'},
@@ -117,7 +117,7 @@ function export.make_sort_rules(options)
     {'comment_type', reg, 'TYPE'},
     {'comment_function', reg, 'FUNCTION'},
     {'comment_table', reg, 'TABLE'},
-    {'comment_view', reg, 'VIEW'},
+    {'comment_view', reg, 'TABLE'},
     {'comment_column', reg, 'TABLE'},
 
     {'revoke_schema', schema, 'SCHEMA'},
