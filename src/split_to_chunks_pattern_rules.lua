@@ -520,6 +520,25 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_view',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'view'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_sequence',
       {kw, 'create'},
       {
