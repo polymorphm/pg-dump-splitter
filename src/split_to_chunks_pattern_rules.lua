@@ -208,6 +208,59 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'create_domain',
+      {kw, 'create'},
+      {kw, 'domain'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_domain',
+      {kw, 'alter'},
+      {kw, 'domain'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_domain',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'domain'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_function',
       {kw, 'create'},
       {
