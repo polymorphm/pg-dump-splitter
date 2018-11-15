@@ -110,6 +110,7 @@ function export.make_sort_rules(options)
     {'create_index', rel, 'TABLE'},
     {'create_trigger', rel, 'TABLE'},
 
+    {'comment_database', rude, 'DATABASE'},
     {'comment_schema', schema, 'SCHEMA'},
     {'comment_extension', reg, 'EXTENSION'},
     {'comment_type', reg, 'TYPE'},

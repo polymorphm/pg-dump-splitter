@@ -28,6 +28,17 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_database',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'database'},
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_schema',
       {kw, 'create'},
       {kw, 'schema'},
