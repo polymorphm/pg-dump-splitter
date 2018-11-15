@@ -19,10 +19,10 @@ An example of simple using pg-dump-splitter::
 An example with turning of excluding some parts and suppressing unprocessed
 errors::
 
-   $ pg_dump_splitter --save-unprocessed -kexcluding-obj-hook.lua -- dump.sql db_objects
+   $ pg_dump_splitter --save-unprocessed -kexcluding-obj-hooks.lua -- dump.sql db_objects
 
 ``db_objects`` will contain grouped parts of ``dump.sql``. To write the
-file ``excluding-obj-hook.lua`` see ``EXAMPLE.excluding-obj-hook.lua`` in
+file ``excluding-obj-hooks.lua`` see ``EXAMPLE.excluding-obj-hooks.lua`` in
 source code's directory.
 
 Building: A Short Story
