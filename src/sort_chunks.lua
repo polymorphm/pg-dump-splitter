@@ -104,8 +104,10 @@ function export.make_sort_rules(options)
     {'create_sequence', reg, 'TABLE'},
     {'create_cast', rude, 'CAST'},
 
+    {'alter_default_privileges_revoke', rude, 'DEFAULT_PRIVILEGES'},
+    {'alter_default_privileges_grant', rude, 'DEFAULT_PRIVILEGES'},
+
     {'alter_schema', schema, 'SCHEMA'},
-    {'alter_default_privileges', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_type', reg, 'TYPE'},
     {'alter_domain', reg, 'DOMAIN'},
     {'alter_function', reg, 'FUNCTION'},

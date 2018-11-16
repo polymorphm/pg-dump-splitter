@@ -105,7 +105,7 @@ function export.make_pattern_rules(handlers)
     },
 
     {
-      'alter_default_privileges',
+      'alter_default_privileges_revoke',
       {kw, 'alter'},
       {kw, 'default'},
       {kw, 'privileges'},
@@ -120,6 +120,30 @@ function export.make_pattern_rules(handlers)
         },
       },
       {ident, 'role'},
+      {any},
+      {kw, 'revoke'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_default_privileges_grant',
+      {kw, 'alter'},
+      {kw, 'default'},
+      {kw, 'privileges'},
+      {kw, 'for'},
+      {
+        fork,
+        {
+          {kw, 'role'},
+        },
+        {
+          {kw, 'user'},
+        },
+      },
+      {ident, 'role'},
+      {any},
+      {kw, 'grant'},
       {any},
       {en},
     },
