@@ -129,6 +129,8 @@ function export.make_sort_rules(options)
     {'comment_column', reg, 'TABLE'},
     {'comment_sequence', reg, 'TABLE'},
     {'comment_cast', rude, 'CAST'},
+    {'comment_index', reg, 'TABLE'},
+    {'comment_trigger', rel, 'TABLE'},
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},

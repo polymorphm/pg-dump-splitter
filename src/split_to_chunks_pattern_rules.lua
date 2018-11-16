@@ -900,6 +900,25 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_index',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'index'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_trigger',
       {kw, 'create'},
       {kw, 'trigger'},
@@ -916,6 +935,27 @@ function export.make_pattern_rules(handlers)
       },
       {ident, 'rel_name'},
       {any},
+      {en},
+    },
+
+    {
+      'comment_trigger',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'trigger'},
+      {ident, 'obj_name'},
+      {kw, 'on'},
+      {
+        fork,
+        {
+          {ident, 'rel_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'rel_name'},
+      {kw, 'is'},
+      {str, 'comment'},
       {en},
     },
 
