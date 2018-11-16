@@ -147,6 +147,14 @@ function export.str_rule_handler(rule_ctx, lexeme, options)
   end
 end
 
+function export.op_ident_rule_handler(rule_ctx, lexeme, options)
+  if lexeme.level == 1 and
+      lexeme.lex_subtype == options.lex_consts.subtype_random_symbols then
+    rule_ctx:put_value(rule_ctx.rule[2], lexeme.value)
+    rule_ctx:push_shifted_pt()
+  end
+end
+
 function export.en_rule_handler(rule_ctx, lexeme, options)
   if lexeme.level == 1 and
       lexeme.lex_subtype == options.lex_consts.subtype_special_symbols and
@@ -204,6 +212,7 @@ function export.make_pattern_rules(options)
     ss_rule_handler = export.ss_rule_handler,
     ident_rule_handler = export.make_ident_rule_handler(),
     str_rule_handler = export.str_rule_handler,
+    op_ident_rule_handler = export.op_ident_rule_handler,
     en_rule_handler = export.en_rule_handler,
     any_rule_handler =  export.any_rule_handler,
     fork_rule_handler = export.fork_rule_handler,

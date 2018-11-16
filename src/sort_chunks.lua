@@ -82,11 +82,36 @@ function export.schema_rule_handler(rule, obj_type, obj_values)
   return directories, filename, rule.order
 end
 
+function export.ugly_rule_handler(rule, obj_type, obj_values)
+  -- it's just almost regular handler, but
+  -- its objects have ugly names (or without names at all, but with schames?).
+  -- we don't want to save them with their ugly names
+
+  local directories, filename
+  local obj_title = rule.args[1]
+
+  if obj_values.obj_schema then
+    if rule.no_schema_dirs then
+      directories = {obj_title}
+      filename = obj_values.obj_schema
+    else
+      directories = {obj_values.obj_schema}
+      filename = obj_title
+    end
+  else
+    directories = {}
+    filename = obj_title
+  end
+
+  return directories, filename, rule.order
+end
+
 function export.make_sort_rules(options)
   local reg = export.regular_rule_handler
   local rel = export.relative_rule_handler
   local rude = export.rude_rule_handler
   local schema = export.schema_rule_handler
+  local ugly = export.ugly_rule_handler
 
   local items = {
     {'set', rude, 'MISC'},
@@ -103,6 +128,7 @@ function export.make_sort_rules(options)
     {'create_view', reg, 'TABLE'},
     {'create_sequence', reg, 'TABLE'},
     {'create_cast', rude, 'CAST'},
+    {'create_operator', ugly, 'OPERATOR'},
 
     {'alter_default_privileges_revoke', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_default_privileges_grant', rude, 'DEFAULT_PRIVILEGES'},
@@ -113,6 +139,7 @@ function export.make_sort_rules(options)
     {'alter_function', reg, 'FUNCTION'},
     {'alter_table', reg, 'TABLE'},
     {'alter_sequence', reg, 'TABLE'},
+    {'alter_operator', ugly, 'OPERATOR'},
 
     {'create_index', rel, 'TABLE'},
     {'create_trigger', rel, 'TABLE'},
@@ -131,6 +158,7 @@ function export.make_sort_rules(options)
     {'comment_cast', rude, 'CAST'},
     {'comment_index', reg, 'TABLE'},
     {'comment_trigger', rel, 'TABLE'},
+    {'comment_operator', ugly, 'OPERATOR'},
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},

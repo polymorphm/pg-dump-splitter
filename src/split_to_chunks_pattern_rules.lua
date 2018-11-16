@@ -7,6 +7,7 @@ function export.make_pattern_rules(handlers)
   local ss = handlers.ss_rule_handler
   local ident = handlers.ident_rule_handler
   local str = handlers.str_rule_handler
+  local op_ident = handlers.op_ident_rule_handler
   local en = handlers.en_rule_handler
   local any =  handlers.any_rule_handler
   local fork = handlers.fork_rule_handler
@@ -980,6 +981,67 @@ function export.make_pattern_rules(handlers)
       {en},
     },
 
+    {
+      'create_operator',
+      {kw, 'create'},
+      {kw, 'operator'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {op_ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_operator',
+      {kw, 'alter'},
+      {kw, 'operator'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {op_ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_operator',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'operator'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {op_ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
   }
 end
 
