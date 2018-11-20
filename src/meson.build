@@ -15,11 +15,19 @@ lua_emb_src = embedder_lua_gen.process(
   'sort_chunks.lua',
 )
 
+if use_winapi_opt
+  main_src = 'winapi/main-winapi.c'
+  os_ext_src = 'winapi/os-ext-winapi.c'
+else
+  main_src = 'main.c'
+  os_ext_src = 'os-ext.c'
+endif
+
 sources = [
-  'main.c',
+  main_src,
   'bootstrap.c',
   'emb-libs.c',
-  'os-ext.c',
+  os_ext_src,
   'lex.c',
   lua_emb_src,
   git_rev_c,
@@ -34,7 +42,7 @@ if make_lib_opt
   shared_sources = [
     'bootstrap.c',
     'emb-libs.c',
-    'os-ext.c',
+    os_ext_src,
     'lex.c',
     lua_emb_src,
   ]

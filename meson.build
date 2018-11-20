@@ -4,6 +4,7 @@ project('pg-dump-splitter', 'c',
 link_argp_opt = get_option('link-argp')
 luac_opt = get_option('luac')
 make_lib_opt = get_option('make-lib')
+use_winapi_opt = get_option('use-winapi')
 
 lua_dep = dependency('lua')
 

@@ -3,6 +3,8 @@ option('link-argp', type : 'boolean', value : false,
 option('luac', type : 'string',
     description : 'Path to luac program binary')
 option('make-lib', type : 'boolean', value : false,
-    description : 'Also make a shared object library')
+    description : 'Make a shared object library besides to executable')
+option('use-winapi', type : 'boolean', value : false,
+    description : 'Use MS Windows API instead of GNU/Linux API')
 
 # vi:ts=2:sw=2:et
