@@ -17,6 +17,7 @@ lua_emb_src = embedder_lua_gen.process(
 
 sources = [
   'main.c',
+  'bootstrap.c',
   'emb-libs.c',
   'os-ext.c',
   'lex.c',
