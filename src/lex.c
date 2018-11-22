@@ -485,7 +485,7 @@ undefined_wo_stash (struct lex_feed_ctx *f)
             luaL_error (f->L,
                     "pos(%I) line(%I) col(%I): "
                     "unknown lexeme type started with character: "
-                    "%d %f->c",
+                    "%d %c",
                     f->ctx->pos, f->ctx->line, f->ctx->col, f->c, f->c);
             __builtin_unreachable ();
     }
@@ -590,7 +590,7 @@ undefined_with_stash (struct lex_feed_ctx *f)
             luaL_error (f->L,
                     "pos(%I) line(%I) col(%I): "
                     "unknown lexeme type started with characters: "
-                    "%d %d %f->c %f->c",
+                    "%d %d %c %c",
                     f->ctx->pos, f->ctx->line, f->ctx->col,
                     f->stash, f->c, f->stash, f->c);
             __builtin_unreachable ();
