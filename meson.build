@@ -1,10 +1,17 @@
 project('pg-dump-splitter', 'c',
         version : 'PRE-1.0')
 
+link_argp_opt = get_option('link-argp')
 luac_opt = get_option('luac')
 make_lib_opt = get_option('make-lib')
 
 lua_dep = dependency('lua')
+
+if link_argp_opt
+  sys_dep = meson.get_compiler('c').find_library('argp')
+else
+  sys_dep = []
+endif
 
 if luac_opt != ''
   luac_program = find_program(luac_opt)

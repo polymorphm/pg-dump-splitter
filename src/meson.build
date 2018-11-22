@@ -27,7 +27,7 @@ sources = [
 
 executable('pg-dump-splitter', sources,
            include_directories : inc,
-           dependencies : lua_dep,
+           dependencies : [lua_dep, sys_dep],
            install : true)
 
 if make_lib_opt
