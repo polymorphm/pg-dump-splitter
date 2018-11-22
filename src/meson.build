@@ -17,7 +17,7 @@ lua_emb_src = embedder_lua_gen.process(
 
 if use_winapi_opt
   main_src = 'winapi/main-winapi.c'
-  os_ext_src = 'winapi/os-ext-winapi.c'
+  os_ext_src = ['winapi/os-ext-winapi.c', 'winapi/os-helpers-winapi.c']
 else
   main_src = 'main.c'
   os_ext_src = 'os-ext.c'
