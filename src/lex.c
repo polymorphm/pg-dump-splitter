@@ -127,7 +127,7 @@ push_c_to_buf (lua_State *L,
         {
             luaL_error (L,
                     "max_size lexeme buffer limit has exceeded: %I > %I",
-                    need_size, ctx->max_size);
+                    (lua_Integer) need_size, (lua_Integer) ctx->max_size);
             __builtin_unreachable ();
         }
 
@@ -152,7 +152,7 @@ push_str_to_buf (lua_State *L,
         {
             luaL_error (L,
                     "max_size lexeme buffer limit has exceeded: %I > %I",
-                    need_size, ctx->max_size);
+                    (lua_Integer) need_size, (lua_Integer) ctx->max_size);
             __builtin_unreachable ();
         }
 
@@ -478,7 +478,9 @@ undefined_wo_stash (struct lex_feed_ctx *f)
                     "pos(%I) line(%I) col(%I): "
                     "lexeme type started with \"\\\" "
                     "is forbidden",
-                    f->ctx->pos, f->ctx->line, f->ctx->col);
+                    (lua_Integer) f->ctx->pos,
+                    (lua_Integer) f->ctx->line,
+                    (lua_Integer) f->ctx->col);
             __builtin_unreachable ();
 
         default:
@@ -486,7 +488,10 @@ undefined_wo_stash (struct lex_feed_ctx *f)
                     "pos(%I) line(%I) col(%I): "
                     "unknown lexeme type started with character: "
                     "%d %c",
-                    f->ctx->pos, f->ctx->line, f->ctx->col, f->c, f->c);
+                    (lua_Integer) f->ctx->pos,
+                    (lua_Integer) f->ctx->line,
+                    (lua_Integer) f->ctx->col,
+                    (int) f->c, f->c);
             __builtin_unreachable ();
     }
 
@@ -573,7 +578,9 @@ undefined_with_stash (struct lex_feed_ctx *f)
                         "pos(%I) line(%I) col(%I): "
                         "lexeme type started with \"u&\" "
                         "is not supported yet",
-                        f->ctx->pos, f->ctx->line, f->ctx->col);
+                        (lua_Integer) f->ctx->pos,
+                        (lua_Integer) f->ctx->line,
+                        (lua_Integer) f->ctx->col);
                 __builtin_unreachable ();
             }
             else
@@ -591,8 +598,10 @@ undefined_with_stash (struct lex_feed_ctx *f)
                     "pos(%I) line(%I) col(%I): "
                     "unknown lexeme type started with characters: "
                     "%d %d %c %c",
-                    f->ctx->pos, f->ctx->line, f->ctx->col,
-                    f->stash, f->c, f->stash, f->c);
+                    (lua_Integer) f->ctx->pos,
+                    (lua_Integer) f->ctx->line,
+                    (lua_Integer) f->ctx->col,
+                    (int) f->stash, (int) f->c, f->stash, f->c);
             __builtin_unreachable ();
     }
 
@@ -639,7 +648,9 @@ quoted_ident_wo_stash (struct lex_feed_ctx *f)
             luaL_error (f->L,
                     "pos(%I) line(%I) col(%I): "
                     "unterminated lexeme: quoted_ident",
-                    f->ctx->pos, f->ctx->line, f->ctx->col);
+                    (lua_Integer) f->ctx->pos,
+                    (lua_Integer) f->ctx->line,
+                    (lua_Integer) f->ctx->col);
             __builtin_unreachable ();
 
         default:
@@ -821,7 +832,9 @@ simple_string_wo_stash (struct lex_feed_ctx *f)
             luaL_error (f->L,
                     "pos(%I) line(%I) col(%I): "
                     "unterminated lexeme: simple_string",
-                    f->ctx->pos, f->ctx->line, f->ctx->col);
+                    (lua_Integer) f->ctx->pos,
+                    (lua_Integer) f->ctx->line,
+                    (lua_Integer) f->ctx->col);
             __builtin_unreachable ();
 
         default:
@@ -850,7 +863,9 @@ escape_string_wo_stash (struct lex_feed_ctx *f)
             luaL_error (f->L,
                     "pos(%I) line(%I) col(%I): "
                     "unterminated lexeme: escape_string",
-                    f->ctx->pos, f->ctx->line, f->ctx->col);
+                    (lua_Integer) f->ctx->pos,
+                    (lua_Integer) f->ctx->line,
+                    (lua_Integer) f->ctx->col);
             __builtin_unreachable ();
 
         default:
@@ -890,7 +905,9 @@ dollar_string (struct lex_feed_ctx *f)
         luaL_error (f->L,
                 "pos(%I) line(%I) col(%I): "
                 "unterminated lexeme: dollar_string ",
-                f->ctx->pos, f->ctx->line, f->ctx->col);
+                (lua_Integer) f->ctx->pos,
+                (lua_Integer) f->ctx->line,
+                (lua_Integer) f->ctx->col);
         __builtin_unreachable ();
     }
 
@@ -1017,7 +1034,9 @@ mult_line_comment_wo_stash (struct lex_feed_ctx *f)
             luaL_error (f->L,
                     "pos(%I) line(%I) col(%I): "
                     "unterminated lexeme: mult_line_comment",
-                    f->ctx->pos, f->ctx->line, f->ctx->col);
+                    (lua_Integer) f->ctx->pos,
+                    (lua_Integer) f->ctx->line,
+                    (lua_Integer) f->ctx->col);
             __builtin_unreachable ();
 
         default:
