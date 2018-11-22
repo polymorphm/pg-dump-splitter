@@ -261,7 +261,7 @@ main (int argc, char *argv[])
 
     if (lua_err)
     {
-        fprintf (stderr, "%s\n", lua_tostring(L, -1));
+        fprintf (stderr, "%s\n", lua_tostring (L, -1));
         exit_code = 1;
     }
 
