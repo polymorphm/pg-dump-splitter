@@ -121,7 +121,7 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
     std.assert(tmp_output_dir, 'no tmp_output_dir')
 
     lex_ctx = options.make_lex_ctx(options.lex_max_size)
-    dump_fd = std.assert(options.open(dump_path))
+    dump_fd = std.assert(options.open(dump_path, 'rb'))
     paths_fd = std.assert(options.tmpfile())
     std.assert(options.mkdir(tmp_output_dir))
 
@@ -173,7 +173,7 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       buf = paths_fd:read((('j'):unpack(buf)))
       local raw_path, ready_path = ('ss'):unpack(buf)
 
-      local ready_fd = options.open(ready_path)
+      local ready_fd = options.open(ready_path, 'rb')
 
       if ready_fd then
         ready_fd:close()

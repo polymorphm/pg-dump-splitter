@@ -199,7 +199,7 @@ function export.add_to_chunk(output_dir, directories, filename, order, dump_data
   local chunk_fd
 
   local ok, err = std.xpcall(function()
-    chunk_fd = std.assert(options.open(raw_path, 'a'))
+    chunk_fd = std.assert(options.open(raw_path, 'ab'))
     local buf = ('js'):pack(order, dump_data)
     chunk_fd:write(('j'):pack(#buf), buf)
   end, std.debug.traceback)
@@ -216,8 +216,8 @@ function export.sort_chunk (raw_path, ready_path, options)
   local sql_fd
 
   local ok, err = std.xpcall(function()
-    chunk_fd = std.assert(options.open(raw_path))
-    sql_fd = std.assert(options.open(ready_path, 'w'))
+    chunk_fd = std.assert(options.open(raw_path, 'rb'))
+    sql_fd = std.assert(options.open(ready_path, 'wb'))
 
     local sortable = {}
 
