@@ -1022,6 +1022,46 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'create_aggregate',
+      {kw, 'create'},
+      {kw, 'aggregate'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_aggregate',
+      {kw, 'alter'},
+      {kw, 'aggregate'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
       'comment_operator',
       {kw, 'comment'},
       {kw, 'on'},
@@ -1035,6 +1075,28 @@ function export.make_pattern_rules(handlers)
         {},
       },
       {op_ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
+      'comment_aggregate',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'aggregate'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
       {ss, '('},
       {any},
       {ss, ')'},

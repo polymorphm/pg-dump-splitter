@@ -129,6 +129,7 @@ function export.make_sort_rules(options)
     {'create_sequence', reg, 'TABLE'},
     {'create_cast', rude, 'CAST'},
     {'create_operator', ugly, 'OPERATOR'},
+    {'create_aggregate', reg, 'AGGREGATE'},
 
     {'alter_default_privileges_revoke', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_default_privileges_grant', rude, 'DEFAULT_PRIVILEGES'},
@@ -140,6 +141,7 @@ function export.make_sort_rules(options)
     {'alter_table', reg, 'TABLE'},
     {'alter_sequence', reg, 'TABLE'},
     {'alter_operator', ugly, 'OPERATOR'},
+    {'alter_aggregate', reg, 'AGGREGATE'},
 
     {'create_index', rel, 'TABLE'},
     {'create_trigger', rel, 'TABLE'},
@@ -159,6 +161,7 @@ function export.make_sort_rules(options)
     {'comment_index', reg, 'TABLE'},
     {'comment_trigger', rel, 'TABLE'},
     {'comment_operator', ugly, 'OPERATOR'},
+    {'comment_aggregate', reg, 'AGGREGATE'},
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},
