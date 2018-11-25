@@ -128,6 +128,7 @@ function export.make_sort_rules(options)
     {'create_view', reg, 'TABLE'},
     {'create_sequence', reg, 'TABLE'},
     {'create_cast', rude, 'CAST'},
+    {'create_event_trigger', reg, 'EVENT_TRIGGER'},
     {'create_operator', ugly, 'OPERATOR'},
     {'create_aggregate', reg, 'AGGREGATE'},
 
@@ -140,6 +141,7 @@ function export.make_sort_rules(options)
     {'alter_function', reg, 'FUNCTION'},
     {'alter_table', reg, 'TABLE'},
     {'alter_sequence', reg, 'TABLE'},
+    {'alter_event_trigger', reg, 'EVENT_TRIGGER'},
     {'alter_operator', ugly, 'OPERATOR'},
     {'alter_aggregate', reg, 'AGGREGATE'},
 
@@ -162,6 +164,7 @@ function export.make_sort_rules(options)
     {'comment_constraint', rel, 'TABLE'},
     {'comment_constraint_domain', rel, 'DOMAIN'},
     {'comment_trigger', rel, 'TABLE'},
+    {'comment_event_trigger', reg, 'EVENT_TRIGGER'},
     {'comment_operator', ugly, 'OPERATOR'},
     {'comment_aggregate', reg, 'AGGREGATE'},
 

@@ -1056,6 +1056,39 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'create_event_trigger',
+      {kw, 'create'},
+      {kw, 'event'},
+      {kw, 'trigger'},
+      {ident, 'obj_name'},
+      {kw, 'on'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_event_trigger',
+      {kw, 'alter'},
+      {kw, 'event'},
+      {kw, 'trigger'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_event_trigger',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'event'},
+      {kw, 'trigger'},
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_operator',
       {kw, 'create'},
       {kw, 'operator'},
