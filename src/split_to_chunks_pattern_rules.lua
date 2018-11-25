@@ -920,6 +920,49 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_constraint',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'constraint'},
+      {ident, 'obj_name'},
+      {kw, 'on'},
+      {
+        fork,
+        {
+          {ident, 'rel_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'rel_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
+      'comment_constraint_domain',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'constraint'},
+      {ident, 'obj_name'},
+      {kw, 'on'},
+      {kw, 'domain'},
+      {
+        fork,
+        {
+          {ident, 'rel_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'rel_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_trigger',
       {kw, 'create'},
       {kw, 'trigger'},

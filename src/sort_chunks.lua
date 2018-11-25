@@ -159,6 +159,8 @@ function export.make_sort_rules(options)
     {'comment_sequence', reg, 'TABLE'},
     {'comment_cast', rude, 'CAST'},
     {'comment_index', reg, 'TABLE'},
+    {'comment_constraint', rel, 'TABLE'},
+    {'comment_constraint_domain', rel, 'DOMAIN'},
     {'comment_trigger', rel, 'TABLE'},
     {'comment_operator', ugly, 'OPERATOR'},
     {'comment_aggregate', reg, 'AGGREGATE'},
