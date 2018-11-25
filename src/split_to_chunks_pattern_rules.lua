@@ -1129,6 +1129,28 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'comment_operator',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'operator'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {op_ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
       'create_aggregate',
       {kw, 'create'},
       {kw, 'aggregate'},
@@ -1169,28 +1191,6 @@ function export.make_pattern_rules(handlers)
     },
 
     {
-      'comment_operator',
-      {kw, 'comment'},
-      {kw, 'on'},
-      {kw, 'operator'},
-      {
-        fork,
-        {
-          {ident, 'obj_schema'},
-          {ss, '.'},
-        },
-        {},
-      },
-      {op_ident, 'obj_name'},
-      {ss, '('},
-      {any},
-      {ss, ')'},
-      {kw, 'is'},
-      {str, 'comment'},
-      {en},
-    },
-
-    {
       'comment_aggregate',
       {kw, 'comment'},
       {kw, 'on'},
@@ -1207,6 +1207,69 @@ function export.make_pattern_rules(handlers)
       {ss, '('},
       {any},
       {ss, ')'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
+      'create_language',
+      {kw, 'create'},
+      {
+        fork,
+        {
+          {kw, 'or'},
+          {kw, 'replace'},
+        },
+        {},
+      },
+      {
+        rep,
+        {
+          fork,
+          {
+            {kw, 'trusted'},
+          },
+          {
+            {kw, 'procedural'},
+          },
+        },
+      },
+      {kw, 'language'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_language',
+      {kw, 'alter'},
+      {
+        fork,
+        {
+          {kw, 'procedural'},
+        },
+        {},
+      },
+      {kw, 'language'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_language',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {
+        fork,
+        {
+          {kw, 'procedural'},
+        },
+        {},
+      },
+      {kw, 'language'},
+      {ident, 'obj_name'},
       {kw, 'is'},
       {str, 'comment'},
       {en},

@@ -131,6 +131,7 @@ function export.make_sort_rules(options)
     {'create_event_trigger', reg, 'EVENT_TRIGGER'},
     {'create_operator', ugly, 'OPERATOR'},
     {'create_aggregate', reg, 'AGGREGATE'},
+    {'create_language', reg, 'LANGUAGE'},
 
     {'alter_default_privileges_revoke', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_default_privileges_grant', rude, 'DEFAULT_PRIVILEGES'},
@@ -144,6 +145,7 @@ function export.make_sort_rules(options)
     {'alter_event_trigger', reg, 'EVENT_TRIGGER'},
     {'alter_operator', ugly, 'OPERATOR'},
     {'alter_aggregate', reg, 'AGGREGATE'},
+    {'alter_language', reg, 'LANGUAGE'},
 
     {'create_index', rel, 'TABLE'},
     {'create_trigger', rel, 'TABLE'},
@@ -167,6 +169,7 @@ function export.make_sort_rules(options)
     {'comment_event_trigger', reg, 'EVENT_TRIGGER'},
     {'comment_operator', ugly, 'OPERATOR'},
     {'comment_aggregate', reg, 'AGGREGATE'},
+    {'comment_language', reg, 'LANGUAGE'},
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},
