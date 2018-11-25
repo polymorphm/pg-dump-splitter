@@ -51,22 +51,22 @@ static struct argp_option argp_options[] =
 {
     {
         .name = "save-unprocessed",
-        .key = 701,
+        .key = 'u',
         .doc = "Save unprocessed dump chunks instead of yielding error",
     },
     {
         .name = "no-schema-dirs",
-        .key = 702,
+        .key = 'S',
         .doc = "Alternative file tree layout to saving sorted dump chunks",
     },
     {
         .name = "relaxed-order",
-        .key = 703,
+        .key = 'O',
         .doc = "Relaxed order of sorting dump chunks",
     },
     {
         .name = "sql-footer",
-        .key = 704,
+        .key = 'f',
         .arg = "SQL-FOOTER",
         .doc = "A footer that will be added at end of each sorted dump chunk",
     },
@@ -86,22 +86,22 @@ argp_parser (int key, char *arg, struct argp_state *state)
 
     switch (key)
     {
-        case 701:
+        case 'u':
             arguments->save_unprocessed = 1;
 
             break;
 
-        case 702:
+        case 'S':
             arguments->no_schema_dirs = 1;
 
             break;
 
-        case 703:
+        case 'O':
             arguments->relaxed_order = 1;
 
             break;
 
-        case 704:
+        case 'f':
             if (arguments->sql_footer)
             {
                 argp_error (state,
