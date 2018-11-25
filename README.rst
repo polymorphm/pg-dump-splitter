@@ -87,6 +87,40 @@ And turning on precompilation of lua-scripts::
 
    $ unset PKG_CONFIG_LIBDIR
 
+Building: a Microsoft Windows Quest
+-----------------------------------
+
+A building stack that is able to work on ``Microsoft Windows`` contains next
+items:
+
+   * ``LLVM`` pre-built binaries (include ``Clang``).
+
+   * ``Microsoft Build Tools``. It's required for linking phase of ``LLVM``.
+
+   * ``ninja`` binary.
+
+   * ``python`` binaries.
+
+   * ``meson`` installed via ``python``'s ``pip install``.
+
+   * ``pkg-config-lite`` binary.
+
+   * ``lua`` pre-built binaries. Choose Visual Studio pre-built variant. And
+     you'll need to make custom ``lua.pc`` file.
+
+To complete this hard building quest, you'll need to set/change environment
+variables in Windows Shell: at least ``$env:path`` and ``$env:PKG_CONFIG_PATH``.
+
+For successfully compiling don't forget to set configuration option
+``use-winapi`` to use MS Windows API instead of GNU/Linux API, before calling
+``ninja`` command::
+
+   meson configure -Duse-winapi=true
+
+There are also other ways to resolve the quest. For example ``MSYS2`` tools
+could build with own details. ``meson``-option ``-Dlink-argp=true`` could be useful
+in some cases.
+
 How to Add a New Pattern Rule to the Utility?
 ---------------------------------------------
 
