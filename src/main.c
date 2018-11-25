@@ -1,7 +1,7 @@
 // abort, free
 #include <stdlib.h>
 
-// strdup
+// strlen, strdup
 #include <string.h>
 
 // fprintf, stderr
@@ -103,17 +103,14 @@ argp_parser (int key, char *arg, struct argp_state *state)
     {
         case 'u':
             arguments->save_unprocessed = 1;
-
             break;
 
         case 'S':
             arguments->no_schema_dirs = 1;
-
             break;
 
         case 'O':
             arguments->relaxed_order = 1;
-
             break;
 
         case 'f':
@@ -121,12 +118,10 @@ argp_parser (int key, char *arg, struct argp_state *state)
             {
                 argp_error (state,
                         "attempt to redefine argument for option \"sql-footer\"");
-
                 return EINVAL;
             }
 
             arguments->sql_footer = strdup (arg);
-
             break;
 
         case 'k':
@@ -134,12 +129,10 @@ argp_parser (int key, char *arg, struct argp_state *state)
             {
                 argp_error (state,
                         "attempt to redefine argument for option \"hooks\"");
-
                 return EINVAL;
             }
 
             arguments->hooks_path = strdup (arg);
-
             break;
 
         case ARGP_KEY_ARG:
@@ -147,7 +140,6 @@ argp_parser (int key, char *arg, struct argp_state *state)
             {
                 argp_error (state,
                         "too many arguments");
-
                 return EINVAL;
             }
 
@@ -169,7 +161,6 @@ argp_parser (int key, char *arg, struct argp_state *state)
             {
                 argp_error (state,
                         "too few arguments");
-
                 return EINVAL;
             }
 
