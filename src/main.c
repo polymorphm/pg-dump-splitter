@@ -33,6 +33,21 @@ argp_print_version (FILE *stream,
             pg_dump_splitter_git_rev);
 }
 
+static void
+cut_off_extra_dir_slash (char *dir_path)
+{
+    // deleting extra slash from directory's path.
+    // for example path '/path/to/dir/' would be transformed to '/path/to/dir'
+
+    size_t len = strlen (dir_path);
+
+    while (len && dir_path[len - 1] == '/')
+    {
+        --len;
+        dir_path[len] = 0;
+    }
+}
+
 void (*argp_program_version_hook) (FILE *, struct argp_state *) =
         argp_print_version;
 
@@ -143,6 +158,7 @@ argp_parser (int key, char *arg, struct argp_state *state)
                     break;
                 case 1:
                     arguments->output_dir = strdup (arg);
+                    cut_off_extra_dir_slash (arguments->output_dir);
                     break;
             }
 
