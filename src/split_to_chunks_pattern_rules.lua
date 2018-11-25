@@ -427,6 +427,9 @@ function export.make_pattern_rules(handlers)
           {
             {kw, 'unlogged'},
           },
+          {
+            {kw, 'foreign'},
+          },
         },
       },
       {kw, 'table'},
@@ -488,6 +491,13 @@ function export.make_pattern_rules(handlers)
     {
       'alter_table',
       {kw, 'alter'},
+      {
+        fork,
+        {
+          {kw, 'foreign'},
+        },
+        {},
+      },
       {kw, 'table'},
       {
         fork,
@@ -521,6 +531,13 @@ function export.make_pattern_rules(handlers)
       'comment_table',
       {kw, 'comment'},
       {kw, 'on'},
+      {
+        fork,
+        {
+          {kw, 'foreign'},
+        },
+        {},
+      },
       {kw, 'table'},
       {
         fork,
@@ -562,6 +579,13 @@ function export.make_pattern_rules(handlers)
       {kw, 'revoke'},
       {any},
       {kw, 'on'},
+      {
+        fork,
+        {
+          {kw, 'foreign'},
+        },
+        {},
+      },
       {kw, 'table'},
       {
         fork,
@@ -584,6 +608,13 @@ function export.make_pattern_rules(handlers)
       {kw, 'grant'},
       {any},
       {kw, 'on'},
+      {
+        fork,
+        {
+          {kw, 'foreign'},
+        },
+        {},
+      },
       {kw, 'table'},
       {
         fork,
