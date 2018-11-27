@@ -124,7 +124,6 @@ function export.make_sort_rules(options)
     {'create_domain', reg, 'DOMAIN'},
     {'create_function', reg, 'FUNCTION'},
     {'create_table', reg, 'TABLE'},
-    {'create_rule', rel, 'TABLE'},
     {'create_view', reg, 'TABLE'},
     {'create_sequence', reg, 'TABLE'},
     {'create_cast', rude, 'CAST'},
@@ -147,6 +146,7 @@ function export.make_sort_rules(options)
     {'alter_aggregate', reg, 'AGGREGATE'},
     {'alter_language', reg, 'LANGUAGE'},
 
+    {'create_rule', rel, 'TABLE'},
     {'create_index', rel, 'TABLE'},
     {'create_trigger', rel, 'TABLE'},
 
@@ -157,7 +157,7 @@ function export.make_sort_rules(options)
     {'comment_domain', reg, 'DOMAIN'},
     {'comment_function', reg, 'FUNCTION'},
     {'comment_table', reg, 'TABLE'},
-    {'comment_rule', reg, 'TABLE'},
+    {'comment_rule', rel, 'TABLE'},
     {'comment_view', reg, 'TABLE'},
     {'comment_column', reg, 'TABLE'},
     {'comment_sequence', reg, 'TABLE'},
