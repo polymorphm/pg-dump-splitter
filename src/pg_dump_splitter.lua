@@ -46,8 +46,8 @@ end
 export.chunks_ctx_proto = {}
 
 function export.ident_str_to_file_str(ident)
-  local file_str = ident:gsub('%c', '_'):gsub('%s', '_'):gsub('/', '_')
-      :gsub('\\', '_'):gsub(':', '_'):gsub(';', '_'):gsub(',', '_'):sub(1, 160)
+  local file_str = ident:gsub('/', '_'):gsub('\\', '_'):gsub(':', '_')
+      :gsub(';', '_'):gsub(',', '_'):sub(1, 160)
 
   if file_str:sub(1, 1) == '.' then
     file_str = '_' .. file_str
