@@ -1276,6 +1276,41 @@ function export.make_pattern_rules(handlers)
       {str, 'comment'},
       {en},
     },
+
+    {
+      'create_foreign_data_wrapper',
+      {kw, 'create'},
+      {kw, 'foreign'},
+      {kw, 'data'},
+      {kw, 'wrapper'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_foreign_data_wrapper',
+      {kw, 'alter'},
+      {kw, 'foreign'},
+      {kw, 'data'},
+      {kw, 'wrapper'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_foreign_data_wrapper',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'foreign'},
+      {kw, 'data'},
+      {kw, 'wrapper'},
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
   }
 end
 
