@@ -1351,6 +1351,36 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'revoke_server',
+      {kw, 'revoke'},
+      {any},
+      {kw, 'on'},
+      {kw, 'foreign'},
+      {kw, 'server'},
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'from'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
+      'grant_server',
+      {kw, 'grant'},
+      {any},
+      {kw, 'on'},
+      {kw, 'foreign'},
+      {kw, 'server'},
+      {ident, 'obj_name'},
+      {any},
+      {kw, 'to'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
       'create_user_mapping',
       {kw, 'create'},
       {kw, 'user'},

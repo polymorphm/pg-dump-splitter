@@ -182,11 +182,13 @@ function export.make_sort_rules(options)
     {'revoke_function', reg, 'FUNCTION'},
     {'revoke_table', reg, 'TABLE'},
     {'revoke_sequence', reg, 'TABLE'},
+    {'revoke_server', reg, 'SERVER'},
 
     {'grant_schema', schema, 'SCHEMA'},
     {'grant_function', reg, 'FUNCTION'},
     {'grant_table', reg, 'TABLE'},
     {'grant_sequence', reg, 'TABLE'},
+    {'grant_server', reg, 'SERVER'},
   }
 
   local sort_rules = {}
