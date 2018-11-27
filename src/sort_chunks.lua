@@ -133,6 +133,7 @@ function export.make_sort_rules(options)
     {'create_language', reg, 'LANGUAGE'},
     {'create_foreign_data_wrapper', reg, 'FOREIGN_DATA_WRAPPER'},
     {'create_server', reg, 'SERVER'},
+    {'create_user_mapping', reg, 'USER_MAPPING'},
 
     {'alter_default_privileges_revoke', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_default_privileges_grant', rude, 'DEFAULT_PRIVILEGES'},

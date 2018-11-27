@@ -1349,6 +1349,28 @@ function export.make_pattern_rules(handlers)
       {str, 'comment'},
       {en},
     },
+
+    {
+      'create_user_mapping',
+      {kw, 'create'},
+      {kw, 'user'},
+      {kw, 'mapping'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'not'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {kw, 'for'},
+      {ident, 'role'},
+      {kw, 'server'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
   }
 end
 
