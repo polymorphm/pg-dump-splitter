@@ -1311,6 +1311,44 @@ function export.make_pattern_rules(handlers)
       {str, 'comment'},
       {en},
     },
+
+    {
+      'create_server',
+      {kw, 'create'},
+      {kw, 'server'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'not'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_server',
+      {kw, 'alter'},
+      {kw, 'server'},
+      {ident, 'obj_name'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_server',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'server'},
+      {ident, 'obj_name'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
   }
 end
 

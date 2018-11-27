@@ -132,6 +132,7 @@ function export.make_sort_rules(options)
     {'create_aggregate', reg, 'AGGREGATE'},
     {'create_language', reg, 'LANGUAGE'},
     {'create_foreign_data_wrapper', reg, 'FOREIGN_DATA_WRAPPER'},
+    {'create_server', reg, 'SERVER'},
 
     {'alter_default_privileges_revoke', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_default_privileges_grant', rude, 'DEFAULT_PRIVILEGES'},
@@ -147,6 +148,7 @@ function export.make_sort_rules(options)
     {'alter_aggregate', reg, 'AGGREGATE'},
     {'alter_language', reg, 'LANGUAGE'},
     {'alter_foreign_data_wrapper', reg, 'FOREIGN_DATA_WRAPPER'},
+    {'alter_server', reg, 'SERVER'},
 
     {'create_rule', rel, 'TABLE'},
     {'create_index', rel, 'TABLE'},
@@ -173,6 +175,7 @@ function export.make_sort_rules(options)
     {'comment_aggregate', reg, 'AGGREGATE'},
     {'comment_language', reg, 'LANGUAGE'},
     {'comment_foreign_data_wrapper', reg, 'FOREIGN_DATA_WRAPPER'},
+    {'comment_server', reg, 'SERVER'},
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},
