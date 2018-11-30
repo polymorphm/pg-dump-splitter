@@ -121,6 +121,14 @@ There are also other ways to resolve the quest. For example ``MSYS2`` tools
 could build with own details. ``meson``-option ``-Dlink-argp=true`` could be useful
 in some cases.
 
+In Case of Windows XP Target
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For this case next configurations could be useful (before calling ``ninja``)::
+
+   meson configure -Dc_args=-D_USING_V110_SDK71_
+   meson configure "-Dc_link_args=-Xlinker /SUBSYSTEM:CONSOLE,5.01"
+
 How to Add a New Pattern Rule to the Utility?
 ---------------------------------------------
 
