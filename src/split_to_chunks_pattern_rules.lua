@@ -5,6 +5,7 @@ local export = {}
 function export.make_pattern_rules(handlers)
   local kw = handlers.kw_rule_handler
   local ss = handlers.ss_rule_handler
+  local rs = handlers.rs_rule_handler
   local ident = handlers.ident_rule_handler
   local str = handlers.str_rule_handler
   local op_ident = handlers.op_ident_rule_handler
@@ -17,6 +18,23 @@ function export.make_pattern_rules(handlers)
     {
       'set',
       {kw, 'set'},
+      {
+        fork,
+        {
+          {kw, 'session'},
+        },
+        {
+          {rs, 'local'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {ident, 'obj_name'},
+        },
+        {},
+      },
       {any},
       {en},
     },

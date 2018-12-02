@@ -16,6 +16,7 @@ function export.make_default_options(options)
     save_unprocessed = false,
     no_schema_dirs = false,
     relaxed_order = false,
+    split_stateless = false,
     sql_footer = '-- v' .. 'i:ts=2:sw=2:et',
     lex_consts = lex.consts,
     make_lex_ctx = lex.make_ctx,
@@ -63,25 +64,29 @@ function export.chunks_ctx_proto:add(obj_type, obj_values, dump_data)
   std.assert(obj_type, 'no obj_type')
   std.assert(rule, 'no sort rule for obj_type: ' .. obj_type)
 
-  local directories, filename, order = rule:handler(obj_type, obj_values)
+  local directories, filename, order, state_keys = rule:handler(obj_type,
+      obj_values, self.state_mem, dump_data)
 
   if self.hooks_ctx.add_to_chunk_handler then
-    directories, filename, order, dump_data =
+    directories, filename, order, state_keys, dump_data =
         self.hooks_ctx:add_to_chunk_handler(obj_type, obj_values, directories,
-            filename, order, dump_data)
+            filename, order, state_keys, self.state_mem, dump_data)
   end
 
-  if not directories or not filename or not order or not dump_data then
+  if not directories or not filename or not order or not state_keys or
+      not dump_data then
     return
   end
 
   local raw_path, ready_path = self.options.add_to_chunk(
-      self.output_dir, directories, filename, order, dump_data,
+      self.output_dir, directories, filename, order,
+      state_keys, self.state_mem, dump_data,
       self.options:make_add_to_chunk_options())
 
   if self.hooks_ctx.added_to_chunk_handler then
     self.hooks_ctx:added_to_chunk_handler(obj_type, obj_values,
-        self.output_dir, directories, filename, order, dump_data,
+        self.output_dir, directories, filename, order,
+        state_keys, self.state_mem, dump_data,
         raw_path, ready_path)
   end
 
@@ -129,6 +134,8 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
       hooks_ctx:made_output_dir_handler(tmp_output_dir)
     end
 
+    local state_mem = {}
+
     local sort_rules = options.make_sort_rules(
         options:make_sort_rules_options())
 
@@ -137,6 +144,7 @@ function export.pg_dump_splitter(dump_path, output_dir, hooks_path, options)
 
     local chunks_ctx = std.setmetatable(
       {
+        state_mem = state_mem,
         sort_rules = sort_rules,
         output_dir = tmp_output_dir,
         hooks_ctx = hooks_ctx,

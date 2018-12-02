@@ -109,6 +109,14 @@ function export.ss_rule_handler(rule_ctx, lexeme, options)
   end
 end
 
+function export.rs_rule_handler(rule_ctx, lexeme, options)
+  if lexeme.level == 1 and
+      lexeme.lex_subtype == options.lex_consts.subtype_random_symbols and
+      lexeme.value == rule_ctx.rule[2] then
+    rule_ctx:push_shifted_pt()
+  end
+end
+
 function export.make_ident_rule_handler()
   -- reserved key words got from
   -- https://www.postgresql.org/docs/11/static/sql-keywords-appendix.html
@@ -210,6 +218,7 @@ function export.make_pattern_rules(options)
   local handlers = {
     kw_rule_handler = export.kw_rule_handler,
     ss_rule_handler = export.ss_rule_handler,
+    rs_rule_handler = export.rs_rule_handler,
     ident_rule_handler = export.make_ident_rule_handler(),
     str_rule_handler = export.str_rule_handler,
     op_ident_rule_handler = export.op_ident_rule_handler,
