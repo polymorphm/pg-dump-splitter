@@ -268,7 +268,8 @@ function export.add_to_chunk(output_dir, directories, filename, order,
     options.mkdir(ready_path)
   end
 
-  ready_path = ready_path .. '/' .. options.ident_str_to_file_str(filename) .. '.sql'
+  ready_path = ready_path .. '/' ..
+      options.ident_str_to_file_str(filename) .. '.sql'
   local raw_path = ready_path .. '.chunk'
   local state_keyvalues = {}
   local state_values = {}
@@ -281,7 +282,8 @@ function export.add_to_chunk(output_dir, directories, filename, order,
       std.table.insert(state_values, state_value)
     end
   end
-  std.table.move(state_values, 1, #state_values, #state_keyvalues + 1, state_keyvalues)
+  std.table.move(state_values, 1, #state_values, #state_keyvalues + 1,
+      state_keyvalues)
 
   local chunk_fd
 
