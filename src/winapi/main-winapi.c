@@ -59,6 +59,7 @@ struct arguments
     int save_unprocessed;
     int no_schema_dirs;
     int relaxed_order;
+    int split_stateless;
     wchar_t *sql_footer;
     wchar_t *dump_path;
     wchar_t *output_dir;
@@ -106,6 +107,11 @@ parse_args (struct arguments *arguments, int argc, wchar_t *argv[])
             if (!wcscmp (L"-O", arg) || !wcscmp (L"--relaxed-order", arg))
             {
                 arguments->relaxed_order = 1;
+                continue;
+            }
+            if (!wcscmp (L"-T", arg) || !wcscmp (L"--split-stateless", arg))
+            {
+                arguments->split_stateless = 1;
                 continue;
             }
             if (!wcscmp (L"-f", arg) || !wcscmp (L"--sql-footer", arg))
@@ -205,16 +211,21 @@ bootstrap (lua_State *L)
         lua_pushboolean (L, 1);
         lua_setfield (L, -2, "relaxed_order");
     }
-    if (lua_toboolean (L, 4)) // arg: sql_footer
+    if (lua_toboolean (L, 4)) // arg: split_stateless
     {
-        lua_pushvalue (L, 4);
+        lua_pushboolean (L, 1);
+        lua_setfield (L, -2, "split_stateless");
+    }
+    if (lua_toboolean (L, 5)) // arg: sql_footer
+    {
+        lua_pushvalue (L, 5);
         lua_setfield (L, -2, "sql_footer");
     }
 
     lua_getfield (L, -2, "pg_dump_splitter");
-    lua_pushvalue (L, 5); // arg: dump_path
-    lua_pushvalue (L, 6); // arg: output_dir
-    lua_pushvalue (L, 7); // arg: hooks_path
+    lua_pushvalue (L, 6); // arg: dump_path
+    lua_pushvalue (L, 7); // arg: output_dir
+    lua_pushvalue (L, 8); // arg: hooks_path
     lua_pushvalue (L, -5); // var: options
     lua_call (L, 4, 0);
 
@@ -263,6 +274,7 @@ wmain (int argc, wchar_t *argv[], wchar_t *envp[] __attribute__ ((unused)))
     lua_pushboolean (L, arguments.save_unprocessed);
     lua_pushboolean (L, arguments.no_schema_dirs);
     lua_pushboolean (L, arguments.relaxed_order);
+    lua_pushboolean (L, arguments.split_stateless);
     mbs = pds_os_helpers_make_mbs_from_wcs (arguments.sql_footer);
     lua_pushstring (L, mbs);
     free (mbs);
@@ -276,7 +288,7 @@ wmain (int argc, wchar_t *argv[], wchar_t *envp[] __attribute__ ((unused)))
     lua_pushstring (L, mbs);
     free (mbs);
 
-    int lua_err = lua_pcall (L, 7, 0, -9);
+    int lua_err = lua_pcall (L, 8, 0, -10);
 
     if (lua_err)
     {

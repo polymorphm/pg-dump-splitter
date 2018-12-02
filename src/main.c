@@ -56,6 +56,7 @@ struct arguments
     int save_unprocessed;
     int no_schema_dirs;
     int relaxed_order;
+    int split_stateless;
     char *sql_footer;
     char *dump_path;
     char *output_dir;
@@ -78,6 +79,12 @@ static struct argp_option argp_options[] =
         .name = "relaxed-order",
         .key = 'O',
         .doc = "Relaxed order of sorting dump chunks",
+    },
+    {
+        .name = "split-stateless",
+        .key = 'T',
+        .doc = "Don't link one dump chunks to other dump chunks. "
+                "It's releated to ``SET default_... = ...;`` statements",
     },
     {
         .name = "sql-footer",
@@ -111,6 +118,10 @@ argp_parser (int key, char *arg, struct argp_state *state)
 
         case 'O':
             arguments->relaxed_order = 1;
+            break;
+
+        case 'T':
+            arguments->split_stateless = 1;
             break;
 
         case 'f':
@@ -204,16 +215,21 @@ bootstrap (lua_State *L)
         lua_pushboolean (L, 1);
         lua_setfield (L, -2, "relaxed_order");
     }
-    if (lua_toboolean (L, 4)) // arg: sql_footer
+    if (lua_toboolean (L, 4)) // arg: split_stateless
     {
-        lua_pushvalue (L, 4);
+        lua_pushboolean (L, 1);
+        lua_setfield (L, -2, "split_stateless");
+    }
+    if (lua_toboolean (L, 5)) // arg: sql_footer
+    {
+        lua_pushvalue (L, 5);
         lua_setfield (L, -2, "sql_footer");
     }
 
     lua_getfield (L, -2, "pg_dump_splitter");
-    lua_pushvalue (L, 5); // arg: dump_path
-    lua_pushvalue (L, 6); // arg: output_dir
-    lua_pushvalue (L, 7); // arg: hooks_path
+    lua_pushvalue (L, 6); // arg: dump_path
+    lua_pushvalue (L, 7); // arg: output_dir
+    lua_pushvalue (L, 8); // arg: hooks_path
     lua_pushvalue (L, -5); // var: options
     lua_call (L, 4, 0);
 
@@ -255,6 +271,7 @@ main (int argc, char *argv[])
     lua_pushboolean (L, arguments.save_unprocessed);
     lua_pushboolean (L, arguments.no_schema_dirs);
     lua_pushboolean (L, arguments.relaxed_order);
+    lua_pushboolean (L, arguments.split_stateless);
     lua_pushstring (L, arguments.sql_footer);
     lua_pushstring (L, arguments.dump_path);
     lua_pushstring (L, arguments.output_dir);
@@ -264,7 +281,7 @@ main (int argc, char *argv[])
     free (arguments.output_dir);
     free (arguments.hooks_path);
 
-    int lua_err = lua_pcall (L, 7, 0, -9);
+    int lua_err = lua_pcall (L, 8, 0, -10);
 
     if (lua_err)
     {
