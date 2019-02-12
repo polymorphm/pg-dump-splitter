@@ -23,7 +23,7 @@
 #include "os-helpers-winapi.h"
 
 static void
-wprint_version ()
+wprint_version (void)
 {
     wchar_t *name_wcs =
             pds_os_helpers_make_wcs_from_mbs (PG_DUMP_SPLITTER_NAME);
