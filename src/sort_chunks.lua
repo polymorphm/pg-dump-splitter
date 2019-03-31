@@ -167,6 +167,7 @@ function export.make_sort_rules(options)
     {'create_type', reg, 'TYPE'},
     {'create_domain', reg, 'DOMAIN'},
     {'create_function', reg, 'FUNCTION'},
+    {'create_procedure', reg, 'PROCEDURE'},
     {'create_table', reg, 'TABLE', {
       'default_tablespace',
       'default_with_oids',
@@ -189,6 +190,7 @@ function export.make_sort_rules(options)
     {'alter_type', reg, 'TYPE'},
     {'alter_domain', reg, 'DOMAIN'},
     {'alter_function', reg, 'FUNCTION'},
+    {'alter_procedure', reg, 'PROCEDURE'},
     {'alter_table', reg, 'TABLE'},
     {'alter_sequence', reg, 'TABLE'},
     {'alter_event_trigger', reg, 'EVENT_TRIGGER'},
@@ -210,6 +212,7 @@ function export.make_sort_rules(options)
     {'comment_type', reg, 'TYPE'},
     {'comment_domain', reg, 'DOMAIN'},
     {'comment_function', reg, 'FUNCTION'},
+    {'comment_procedure', reg, 'PROCEDURE'},
     {'comment_table', reg, 'TABLE'},
     {'comment_rule', rel, 'TABLE'},
     {'comment_view', reg, 'TABLE'},
@@ -229,12 +232,14 @@ function export.make_sort_rules(options)
 
     {'revoke_schema', schema, 'SCHEMA'},
     {'revoke_function', reg, 'FUNCTION'},
+    {'revoke_procedure', reg, 'PROCEDURE'},
     {'revoke_table', reg, 'TABLE'},
     {'revoke_sequence', reg, 'TABLE'},
     {'revoke_server', reg, 'SERVER'},
 
     {'grant_schema', schema, 'SCHEMA'},
     {'grant_function', reg, 'FUNCTION'},
+    {'grant_procedure', reg, 'PROCEDURE'},
     {'grant_table', reg, 'TABLE'},
     {'grant_sequence', reg, 'TABLE'},
     {'grant_server', reg, 'SERVER'},

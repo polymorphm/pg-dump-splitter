@@ -424,6 +424,126 @@ function export.make_pattern_rules(handlers)
     },
 
     {
+      'create_procedure',
+      {kw, 'create'},
+      {
+        fork,
+        {
+          {kw, 'or'},
+          {kw, 'replace'},
+        },
+        {},
+      },
+      {kw, 'procedure'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
+      'alter_procedure',
+      {kw, 'alter'},
+      {kw, 'procedure'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {en},
+    },
+
+    {
+      'comment_procedure',
+      {kw, 'comment'},
+      {kw, 'on'},
+      {kw, 'procedure'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {kw, 'is'},
+      {str, 'comment'},
+      {en},
+    },
+
+    {
+      'revoke_procedure',
+      {kw, 'revoke'},
+      {any},
+      {kw, 'on'},
+      {kw, 'procedure'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {kw, 'from'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
+      'grant_procedure',
+      {kw, 'grant'},
+      {any},
+      {kw, 'on'},
+      {kw, 'procedure'},
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {ss, '('},
+      {any},
+      {ss, ')'},
+      {any},
+      {kw, 'to'},
+      {ident, 'role'},
+      {any},
+      {en},
+    },
+
+    {
       'create_table',
       {kw, 'create'},
       {
