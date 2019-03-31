@@ -13,9 +13,9 @@ function export.register_hooks(hooks_ctx)
       local role = obj_values.role or ''
 
       if obj_type == 'grant_function' and
-          obj_schema:match('._taxi_.') and
-          obj_name:match('get_.') and
-          role:match('._client') then
+          obj_schema:match('.+_taxi_.+') == obj_schema and
+          obj_name:match('get_.+') == obj_name and
+          role:match('.+_client') == role then
 
         -- exclude these grants!
         -- them will not be saved to sorted dump chunks

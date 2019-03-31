@@ -9,7 +9,7 @@ function export.register_hooks(hooks_ctx)
       -- excluding objects related with partitions.
       -- looking into ``filename`` looks like the most appropriate method.
 
-      if filename:match('%g*_part%d+') then return end
+      if filename:match('%g*_part%d+') == filename then return end
     end
 
     return directories, filename, order, state_keys, dump_data
