@@ -167,15 +167,21 @@ function export.en_rule_handler(rule_ctx, lexeme, options)
   if lexeme.level == 1 and
       lexeme.lex_subtype == options.lex_consts.subtype_special_symbols and
       lexeme.value == ';' then
+    local obj_priority = rule_ctx.rule[2] or 0
+
     if rule_ctx.pt_ctx.obj_type and
-        rule_ctx.pt_ctx.obj_type ~= rule_ctx.obj_type then
+        rule_ctx.pt_ctx.obj_type ~= rule_ctx.obj_type and
+        rule_ctx.pt_ctx.obj_priority == obj_priority then
       std.error('pos(' .. rule_ctx.pt_ctx.location.lpos ..
           ') line(' .. rule_ctx.pt_ctx.location.lline ..
           ') col(' .. rule_ctx.pt_ctx.location.lcol ..
           '): ambiguous obj_type: ' .. rule_ctx.pt_ctx.obj_type ..
-          ' or ' .. rule_ctx.obj_type)
-    elseif not rule_ctx.pt_ctx.obj_type then
+          ' pri(' .. rule_ctx.pt_ctx.obj_priority .. ')' ..
+          ' or ' .. rule_ctx.obj_type .. ' pri(' .. obj_priority .. ')')
+    elseif not rule_ctx.pt_ctx.obj_type or
+        rule_ctx.pt_ctx.obj_priority < obj_priority then
       rule_ctx.pt_ctx.obj_type = rule_ctx.obj_type
+      rule_ctx.pt_ctx.obj_priority = obj_priority
       rule_ctx.pt_ctx.obj_values = rule_ctx.value_version or {}
     end
   end
