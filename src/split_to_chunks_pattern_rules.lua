@@ -10,9 +10,17 @@ function export.make_pattern_rules(handlers)
   local str = handlers.str_rule_handler
   local op_ident = handlers.op_ident_rule_handler
   local en = handlers.en_rule_handler
-  local any =  handlers.any_rule_handler
+  local any = handlers.any_rule_handler
   local fork = handlers.fork_rule_handler
   local rep = handlers.rep_rule_handler
+
+  local alter_table_partition_pri
+
+  do
+    local priority = 1
+
+    alter_table_partition_pri = priority
+  end
 
   return {
     {
@@ -669,6 +677,75 @@ function export.make_pattern_rules(handlers)
       {ident, 'obj_name'},
       {any},
       {en},
+    },
+
+    {
+      'alter_table_partition',
+      {kw, 'alter'},
+      {
+        fork,
+        {
+          {kw, 'foreign'},
+        },
+        {},
+      },
+      {kw, 'table'},
+      {
+        fork,
+        {
+          {kw, 'if'},
+          {kw, 'exists'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {kw, 'only'},
+        },
+        {},
+      },
+      {
+        fork,
+        {
+          {ident, 'parent_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'parent_name'},
+      {
+        fork,
+        {
+          {kw, 'attach'},
+          {kw, 'partition'},
+        },
+        {
+          {kw, 'detach'},
+          {kw, 'partition'},
+        },
+      },
+      {
+        fork,
+        {
+          {ident, 'obj_schema'},
+          {ss, '.'},
+        },
+        {},
+      },
+      {ident, 'obj_name'},
+      {
+        fork,
+        {
+          {kw, 'for'},
+          {kw, 'values'},
+          {any},
+        },
+        {
+          {kw, 'default'},
+        },
+      },
+      {en, alter_table_partition_pri},
     },
 
     {

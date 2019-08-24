@@ -183,6 +183,8 @@ function export.make_sort_rules(options)
     {'create_server', reg, 'SERVER'},
     {'create_user_mapping', reg, 'USER_MAPPING'},
 
+    {'alter_table_partition', reg, 'TABLE'},
+
     {'alter_default_privileges_revoke', rude, 'DEFAULT_PRIVILEGES'},
     {'alter_default_privileges_grant', rude, 'DEFAULT_PRIVILEGES'},
 
