@@ -209,8 +209,14 @@ function export.make_pattern_rules(handlers)
         {},
       },
       {ident, 'obj_name'},
-      {kw, 'as'},
-      {any},
+      {
+        fork,
+        {
+          {kw, 'as'},
+          {any},
+        },
+        {},
+      },
       {en},
     },
 
